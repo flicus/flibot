@@ -53,10 +53,23 @@ public class PageParser {
     }
 
     public static String fromURL(String url) {
-        return url.replaceAll("/", "_");
+        return url
+                .replace("/opds", "")
+                .replace("authorsequences", "as")
+                .replace("authorsequenceless", "asl")
+                .replace("author", "au")
+                .replace("alphabet", "al")
+                .replace("time", "t")
+                .replaceAll("/", "_");
     }
 
     public static String toURL(String cmd) {
-        return cmd.replaceAll("_", "/");
+        return "/opds" + cmd
+                .replaceAll("_", "/")
+                .replace("t", "time")
+                .replace("al", "alphabet")
+                .replace("au", "author")
+                .replace("asl", "authorsequenceless")
+                .replace("as", "authorsequences");
     }
 }

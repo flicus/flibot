@@ -40,27 +40,16 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.log4j.Logger;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.filter.ElementFilter;
-import org.jdom2.input.SAXBuilder;
 import org.telegram.telegrambots.TelegramApiException;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.send.SendDocument;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
-import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
-import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
-import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 
 import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -149,7 +138,7 @@ public class FliBot extends AbstractVerticle {
                         String cmd = update.getMessage().getText();
 
                         if (cmd.startsWith("/a")) {
-                            getAuthor(cmd.substring(cmd.indexOf(" ") + 1), event -> {
+                            getAuthor(cmd.substring(cmd.indexOf(" ") + 1).replaceAll(" ", "+"), event -> {
                                 if (event.succeeded()) {
                                     sendReply(update, event.result());
                                 } else {
@@ -157,7 +146,7 @@ public class FliBot extends AbstractVerticle {
                                 }
                             });
                         } else if (cmd.startsWith("/b")) {
-                            getBook(cmd.substring(cmd.indexOf(" ") + 1), event -> {
+                            getBook(cmd.substring(cmd.indexOf(" ") + 1).replaceAll(" ", "+"), event -> {
                                 if (event.succeeded()) sendReply(update, event.result());
                             });
                         } else if (cmd.startsWith("/c")) {
@@ -335,7 +324,10 @@ public class FliBot extends AbstractVerticle {
                     entry.getLinks().stream()
                             .filter((l) -> "application/atom+xml;profile=opds-catalog".equals(l.getType()))
                             .forEach(link -> {
-                                sb.append(link.getTitle()).append(" /c").append(PageParser.fromURL(link.getHref())).append("\n");
+                                if (link.getTitle() != null) {
+                                    sb.append(link.getTitle());
+                                }
+                                sb.append(" /c").append(PageParser.fromURL(link.getHref())).append("\n");
                             });
                     entry.getLinks().stream()
                             .filter(l -> "http://opds-spec.org/acquisition/open-access".equals(l.getRel()))
