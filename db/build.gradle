@@ -21,8 +21,37 @@
  *  SOFTWARE.
  */
 
-rootProject.name = 'flibot'
-include 'starter'
-include 'bot'
-include 'db'
+group 'schors'
+//version '1.0-SNAPSHOT'
 
+def generateSrcPath = "$buildDir/generated-src"
+def generatedSrcDir = file("$buildDir/generated-src")
+
+sourceSets {
+    main {
+        java.srcDirs += generatedSrcDir
+        output.dir(builtBy: 'generateServiceProxy', generateSrcPath)
+    }
+}
+
+dependencies {
+    compile "io.vertx:vertx-service-proxy:$version"
+    compile "io.vertx:vertx-codegen:$version"
+    compile "org.json:json:20151123"
+    compile 'com.h2database:h2:1.4.192'
+}
+
+task generateServiceProxy(type: JavaCompile, description: 'Generates EBServiceProxies') {
+    source = sourceSets.main.java
+    classpath = configurations.compile
+    destinationDir = generatedSrcDir
+    options.compilerArgs = [
+
+            "-proc:only",
+            "-processor", "io.vertx.codegen.CodeGenProcessor",
+
+            "-AoutputDirectory=$generateSrcPath"
+    ]
+}
+
+compileJava.dependsOn generateServiceProxy
