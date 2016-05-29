@@ -29,4 +29,5 @@ include 'starter'
 include 'bot'
 //include 'api'
 //include 'telegram'
+include 'db'
 

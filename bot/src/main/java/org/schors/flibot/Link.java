@@ -1,4 +1,4 @@
-package org.schors.eva;
+package org.schors.flibot;
 
 /**
  * Created by flicus on 14.05.16.

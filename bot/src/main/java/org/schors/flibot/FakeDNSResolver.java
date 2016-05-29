@@ -1,4 +1,4 @@
-package org.schors.eva;
+package org.schors.flibot;
 
 import org.apache.http.conn.DnsResolver;
 

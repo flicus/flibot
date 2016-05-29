@@ -26,10 +26,7 @@ group 'schors'
 //version '1.0-SNAPSHOT'
 
 dependencies {
-//    compile project(':api')
-//    compile project(':jabber')
-//    compile project(':telegram')
-//    compile 'com.github.flicus:TempMail:v0.4'
+    compile project(':db')
     compile "io.vertx:vertx-service-proxy:$version"
     compile "io.vertx:vertx-codegen:$version"
     compile "org.json:json:20151123"

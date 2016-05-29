@@ -1,4 +1,4 @@
-package org.schors.eva;
+package org.schors.flibot;
 
 import java.util.ArrayList;
 import java.util.List;

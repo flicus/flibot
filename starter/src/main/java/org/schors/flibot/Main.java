@@ -27,15 +27,36 @@ package org.schors.flibot;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
-import org.schors.eva.FliBot;
+import io.vertx.core.json.JsonObject;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+
+        Properties p = new Properties();
+        p.load(new FileInputStream("bot.ini"));
+        JsonObject config = new JsonObject()
+                .put("name", p.getProperty("name"))
+                .put("token", p.getProperty("token"))
+                .put("torhost", p.getProperty("torhost"))
+                .put("torport", p.getProperty("torport"))
+                .put("admin", p.getProperty("admin"));
+
         VertxOptions options = new VertxOptions().setWorkerPoolSize(40);
         Vertx vertx = Vertx.vertx(options);
 
-        DeploymentOptions deploymentOptions = new DeploymentOptions().setInstances(1);
-        vertx.deployVerticle(new FliBot(), deploymentOptions);
+        DeploymentOptions deploymentOptions = new DeploymentOptions().setInstances(1).setConfig(config);
+        vertx.deployVerticle(new DBManager(), deploymentOptions, event -> {
+            if (event.succeeded()) {
+                vertx.deployVerticle(new FliBot(), deploymentOptions);
+            } else {
+                event.cause().printStackTrace();
+                vertx.close();
+            }
+        });
     }
 }

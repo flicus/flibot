@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.schors.eva;
+package org.schors.flibot;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
@@ -51,8 +51,6 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import java.io.FileOutputStream;
 import java.net.InetSocketAddress;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 
 public class FliBot extends AbstractVerticle {
@@ -65,16 +63,17 @@ public class FliBot extends AbstractVerticle {
 
     private static final Logger log = Logger.getLogger(FliBot.class);
 
-
     private TelegramBotsApi telegram = new TelegramBotsApi();
     private HttpClientContext context = HttpClientContext.create();
     private CloseableHttpClient httpclient;
-    private ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Override
     public void start() {
 
-        InetSocketAddress socksaddr = new InetSocketAddress("127.0.0.1", 9150);
+        final DBService db = DBService.createProxy(vertx, "db-service");
+
+
+        InetSocketAddress socksaddr = new InetSocketAddress(config().getString("torhost"), Integer.parseInt(config().getString("torport")));
         context.setAttribute("socks.address", socksaddr);
 
         Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
@@ -124,52 +123,68 @@ public class FliBot extends AbstractVerticle {
 
                 @Override
                 public String getBotUsername() {
-                    return "evlampia_bot";
+                    return config().getString("name");
                 }
 
                 @Override
                 public String getBotToken() {
-                    return "219739200:AAHXCuDWJPoRhUAjFBXFmljVJhR2uVXdmwc";
+                    return config().getString("token");
                 }
 
                 @Override
                 public void onUpdateReceived(Update update) {
                     if (update.hasMessage() && update.getMessage().hasText()) {
                         String cmd = update.getMessage().getText();
-
-                        if (cmd.startsWith("/a")) {
-                            getAuthor(cmd.substring(cmd.indexOf(" ") + 1).replaceAll(" ", "+"), event -> {
-                                if (event.succeeded()) {
-                                    sendReply(update, event.result());
+                        String userName = update.getMessage().getFrom().getUserName();
+                        db.isRegisterdUser(userName, resgistationRes -> {
+                            if (resgistationRes.succeeded() && resgistationRes.result().getBoolean("res")) {
+                                if (cmd.startsWith("/a")) {
+                                    getAuthor(cmd.substring(cmd.indexOf(" ") + 1).replaceAll(" ", "+"), event -> {
+                                        if (event.succeeded()) {
+                                            sendReply(update, (SendMessage) event.result());
+                                        } else {
+                                            sendReply(update, "Error happened :(");
+                                        }
+                                    });
+                                } else if (cmd.startsWith("/b")) {
+                                    getBook(cmd.substring(cmd.indexOf(" ") + 1).replaceAll(" ", "+"), event -> {
+                                        if (event.succeeded()) sendReply(update, (SendMessage) event.result());
+                                    });
+                                } else if (cmd.startsWith("/c")) {
+                                    getCmd(PageParser.toURL(cmd.replace("/c", "").split("@")[0]), event -> {
+                                        if (event.succeeded()) sendReply(update, (SendMessage) event.result());
+                                    });
+                                } else if (cmd.startsWith("/d")) {
+                                    download(PageParser.toURL(cmd.replace("/d", "").split("@")[0]), event -> {
+                                        if (event.succeeded()) {
+                                            sendFile(update, (SendDocument) event.result());
+                                        } else {
+                                            sendReply(update, "Error happened :(");
+                                        }
+                                    });
+                                } else if (cmd.startsWith("/r")) {
+                                    if (userName.equals(config().getString("admin"))) {
+                                        db.registerUser(cmd.substring(cmd.indexOf(" ") + 1), res -> {
+                                        });
+                                    }
+                                } else if (cmd.startsWith("/u")) {
+                                    if (userName.equals(config().getString("admin"))) {
+                                        db.unregisterUser(cmd.substring(cmd.indexOf(" ") + 1), res -> {
+                                        });
+                                    }
                                 } else {
-                                    sendReply(update, "Error happened :(");
+                                    getAuthor(cmd.substring(cmd.indexOf(" ") + 1), event -> {
+                                        if (event.succeeded()) {
+                                            sendReply(update, (SendMessage) event.result());
+                                        } else {
+                                            sendReply(update, "Error happened :(");
+                                        }
+                                    });
                                 }
-                            });
-                        } else if (cmd.startsWith("/b")) {
-                            getBook(cmd.substring(cmd.indexOf(" ") + 1).replaceAll(" ", "+"), event -> {
-                                if (event.succeeded()) sendReply(update, event.result());
-                            });
-                        } else if (cmd.startsWith("/c")) {
-                            getCmd(PageParser.toURL(cmd.replace("/c", "").split("@")[0]), event -> {
-                                if (event.succeeded()) sendReply(update, event.result());
-                            });
-                        } else if (cmd.startsWith("/d")) {
-                            download(PageParser.toURL(cmd.replace("/d", "").split("@")[0]), event -> {
-                                if (event.succeeded()) {
-                                    sendFile(update, event.result());
-                                } else {
-                                    sendReply(update, "Error happened :(");
-                                }
-                            });
-                        } else {
-                            getAuthor(cmd.substring(cmd.indexOf(" ") + 1), event -> {
-                                if (event.succeeded()) {
-                                    sendReply(update, event.result());
-                                } else {
-                                    sendReply(update, "Error happened :(");
-                                }
-                            });
-                        }
+                            } else {
+                                sendReply(update, "I do not talk to strangers");
+                            }
+                        });
                     }
                 }
             });
@@ -178,8 +193,8 @@ public class FliBot extends AbstractVerticle {
         }
     }
 
-    private void download(String url, Handler<AsyncResult<SendDocument>> handler) {
-        executorService.submit(() -> {
+    private void download(String url, Handler<AsyncResult<Object>> handler) {
+        vertx.executeBlocking(future -> {
             HttpGet httpGet = new HttpGet(rootOPDS + url);
             try {
                 CloseableHttpResponse response = httpclient.execute(httpGet, context);
@@ -190,116 +205,41 @@ public class FliBot extends AbstractVerticle {
                     final SendDocument sendDocument = new SendDocument();
                     sendDocument.setNewDocument("/home/flicus/test.zip", "book.zip");
                     sendDocument.setCaption("book");
-                    handler.handle(new AsyncResult<SendDocument>() {
-                        @Override
-                        public SendDocument result() {
-                            return sendDocument;
-                        }
-
-                        @Override
-                        public Throwable cause() {
-                            return null;
-                        }
-
-                        @Override
-                        public boolean succeeded() {
-                            return true;
-                        }
-
-                        @Override
-                        public boolean failed() {
-                            return false;
-                        }
-                    });
+                    future.complete(sendDocument);
                 }
             } catch (Exception e) {
                 log.warn(e, e);
             }
+        }, res -> {
+            handler.handle(res);
         });
     }
 
-    private void getCmd(String cmd, Handler<AsyncResult<SendMessage>> handler) {
-        executorService.submit(() -> {
+    private void getCmd(String cmd, Handler<AsyncResult<Object>> handler) {
+        vertx.executeBlocking(future -> {
             SendMessage res = doGenericRequest(rootOPDS + cmd);
-            handler.handle(new AsyncResult<SendMessage>() {
-                @Override
-                public SendMessage result() {
-                    return res;
-                }
-
-                @Override
-                public Throwable cause() {
-                    return null;
-                }
-
-                @Override
-                public boolean succeeded() {
-                    return true;
-                }
-
-                @Override
-                public boolean failed() {
-                    return false;
-                }
-            });
-
+            future.complete(res);
+        }, res -> {
+            handler.handle(res);
         });
     }
 
 
-    private void getAuthor(String author, Handler<AsyncResult<SendMessage>> handler) {
-        executorService.submit(() -> {
+    private void getAuthor(String author, Handler<AsyncResult<Object>> handler) {
+        vertx.executeBlocking(future -> {
             SendMessage res = doGenericRequest(rootOPDS + "/opds" + String.format(authorSearch, author));
-            handler.handle(new AsyncResult<SendMessage>() {
-                @Override
-                public SendMessage result() {
-                    return res;
-                }
-
-                @Override
-                public Throwable cause() {
-                    return null;
-                }
-
-                @Override
-                public boolean succeeded() {
-                    return true;
-                }
-
-                @Override
-                public boolean failed() {
-                    return false;
-                }
-            });
-
+            future.complete(res);
+        }, res -> {
+            handler.handle(res);
         });
     }
 
-    private void getBook(String book, Handler<AsyncResult<SendMessage>> handler) {
-        executorService.submit(() -> {
+    private void getBook(String book, Handler<AsyncResult<Object>> handler) {
+        vertx.executeBlocking(future -> {
             SendMessage res = doGenericRequest(rootOPDS + "/opds" + String.format(bookSearch, book));
-            handler.handle(new AsyncResult<SendMessage>() {
-                @Override
-                public SendMessage result() {
-                    return res;
-                }
-
-                @Override
-                public Throwable cause() {
-                    return null;
-                }
-
-                @Override
-                public boolean succeeded() {
-                    return true;
-                }
-
-                @Override
-                public boolean failed() {
-                    return false;
-                }
-            });
-
+            future.complete(res);
+        }, res -> {
+            handler.handle(res);
         });
     }
 

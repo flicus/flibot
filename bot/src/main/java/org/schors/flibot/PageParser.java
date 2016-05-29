@@ -1,4 +1,4 @@
-package org.schors.eva;
+package org.schors.flibot;
 
 import org.jdom2.Document;
 import org.jdom2.Element;
