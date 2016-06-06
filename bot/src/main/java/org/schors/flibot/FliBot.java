@@ -164,11 +164,13 @@ public class FliBot extends AbstractVerticle {
                                 } else if (cmd.startsWith("/r")) {
                                     if (userName.equals(config().getString("admin"))) {
                                         db.registerUser(cmd.substring(cmd.indexOf(" ") + 1), res -> {
+                                            sendReply(update, Boolean.toString(res.succeeded()));
                                         });
                                     }
                                 } else if (cmd.startsWith("/u")) {
                                     if (userName.equals(config().getString("admin"))) {
                                         db.unregisterUser(cmd.substring(cmd.indexOf(" ") + 1), res -> {
+                                            sendReply(update, Boolean.toString(res.succeeded()));
                                         });
                                     }
                                 } else {
