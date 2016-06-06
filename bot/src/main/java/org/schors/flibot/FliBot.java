@@ -163,6 +163,10 @@ public class FliBot extends AbstractVerticle {
                                             sendReply(update, "Error happened :(");
                                         }
                                     });
+                                } else if (cmd.startsWith("/k")) {
+                                    catalog(event -> {
+                                        if (event.succeeded()) sendReply(update, (SendMessage) event.result());
+                                    });
                                 } else if (cmd.startsWith("/r")) {
                                     if (userName.equals(config().getString("admin"))) {
                                         db.registerUser(cmd.substring(cmd.indexOf(" ") + 1), res -> {
@@ -194,6 +198,15 @@ public class FliBot extends AbstractVerticle {
         } catch (Exception e) {
             log.error(e, e);
         }
+    }
+
+    private void catalog(Handler<AsyncResult<Object>> handler) {
+        vertx.executeBlocking(future -> {
+            SendMessage res = doGenericRequest(rootOPDS + "/opds");
+            future.complete(res);
+        }, res -> {
+            handler.handle(res);
+        });
     }
 
     private void download(String url, Handler<AsyncResult<Object>> handler) {

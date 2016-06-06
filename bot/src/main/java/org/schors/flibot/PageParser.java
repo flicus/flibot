@@ -8,6 +8,8 @@ import org.jdom2.input.SAXBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,14 +55,20 @@ public class PageParser {
     }
 
     public static String fromURL(String url) {
-        return url
-                .replace("/opds", "")
-                .replace("authorsequences", "as")
-                .replace("authorsequenceless", "asl")
-                .replace("author", "au")
-                .replace("alphabet", "al")
-                .replace("time", "t")
-                .replaceAll("/", "_");
+        String res = null;
+        try {
+            res = URLDecoder.decode(url
+                    .replace("/opds", "")
+                    .replace("authorsequences", "as")
+                    .replace("authorsequenceless", "asl")
+                    .replace("author", "au")
+                    .replace("alphabet", "al")
+                    .replace("time", "t")
+                    .replaceAll("/", "_"), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return res;
     }
 
     public static String toURL(String cmd, boolean direct) {
