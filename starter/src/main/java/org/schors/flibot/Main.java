@@ -37,14 +37,24 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        Properties p = new Properties();
-        p.load(new FileInputStream("bot.ini"));
-        JsonObject config = new JsonObject()
-                .put("name", p.getProperty("name"))
-                .put("token", p.getProperty("token"))
-                .put("torhost", p.getProperty("torhost"))
-                .put("torport", p.getProperty("torport"))
-                .put("admin", p.getProperty("admin"));
+        JsonObject config = new JsonObject();
+        if (System.getenv("flibot") != null) {
+            //get from env
+            config.put("name", System.getenv("name"))
+                    .put("token", System.getenv("token"))
+                    .put("torhost", System.getenv("torhost"))
+                    .put("torport", System.getenv("torport"))
+                    .put("admin", System.getenv("admin"));
+        } else {
+            //trying to read properties
+            Properties p = new Properties();
+            p.load(new FileInputStream("bot.ini"));
+            config.put("name", p.getProperty("name"))
+                    .put("token", p.getProperty("token"))
+                    .put("torhost", p.getProperty("torhost"))
+                    .put("torport", p.getProperty("torport"))
+                    .put("admin", p.getProperty("admin"));
+        }
 
         VertxOptions options = new VertxOptions().setWorkerPoolSize(40);
         Vertx vertx = Vertx.vertx(options);
