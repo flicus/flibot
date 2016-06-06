@@ -47,6 +47,7 @@ import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -55,6 +56,7 @@ import java.util.List;
 public class FliBot extends AbstractVerticle {
 
     //http://flibustahezeous3.onion/opds//search?searchType=authors&searchTerm=Толстой
+    //http://flibustahezeous3.onion/search?searchType=books&searchTerm=криптономикон
 
     private static final String rootOPDS = "http://flibustahezeous3.onion";
     private static final String authorSearch = "/search?searchType=authors&searchTerm=%s";
@@ -150,11 +152,11 @@ public class FliBot extends AbstractVerticle {
                                         if (event.succeeded()) sendReply(update, (SendMessage) event.result());
                                     });
                                 } else if (cmd.startsWith("/c")) {
-                                    getCmd(PageParser.toURL(cmd.replace("/c", "").split("@")[0]), event -> {
+                                    getCmd(PageParser.toURL(cmd.replace("/c", "").split("@")[0], false), event -> {
                                         if (event.succeeded()) sendReply(update, (SendMessage) event.result());
                                     });
                                 } else if (cmd.startsWith("/d")) {
-                                    download(PageParser.toURL(cmd.replace("/d", "").split("@")[0]), event -> {
+                                    download(PageParser.toURL(cmd.replace("/d", "").split("@")[0], true), event -> {
                                         if (event.succeeded()) {
                                             sendFile(update, (SendDocument) event.result());
                                         } else {
@@ -200,11 +202,20 @@ public class FliBot extends AbstractVerticle {
             try {
                 CloseableHttpResponse response = httpclient.execute(httpGet, context);
                 if (response.getStatusLine().getStatusCode() == 200) {
+                    String fileName = "tmp";
+                    if (url.contains("mobi")) {
+                        String[] parts = url.split("/");
+                        fileName = parts[parts.length - 2] + "." + parts[parts.length - 1];
+                    } else {
+                        String[] parts = url.split("/");
+                        fileName = parts[parts.length - 2] + "." + parts[parts.length - 1] + ".zip";
+                    }
                     HttpEntity ht = response.getEntity();
                     BufferedHttpEntity buf = new BufferedHttpEntity(ht);
-                    buf.writeTo(new FileOutputStream("/home/flicus/test.zip"));
+                    File book = File.createTempFile("flibot_" + Long.toHexString(System.currentTimeMillis()), null);
+                    buf.writeTo(new FileOutputStream(book));
                     final SendDocument sendDocument = new SendDocument();
-                    sendDocument.setNewDocument("/home/flicus/test.zip", "book.zip");
+                    sendDocument.setNewDocument(book.getAbsolutePath(), fileName);
                     sendDocument.setCaption("book");
                     future.complete(sendDocument);
                 }

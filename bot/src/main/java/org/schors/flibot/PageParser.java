@@ -63,8 +63,15 @@ public class PageParser {
                 .replaceAll("/", "_");
     }
 
-    public static String toURL(String cmd) {
-        return "/opds" + cmd
+    public static String toURL(String cmd, boolean direct) {
+        if (direct) return cmd
+                .replaceAll("_", "/")
+                .replace("t", "time")
+                .replace("al", "alphabet")
+                .replace("au", "author")
+                .replace("asl", "authorsequenceless")
+                .replace("as", "authorsequences");
+        else return "/opds" + cmd
                 .replaceAll("_", "/")
                 .replace("t", "time")
                 .replace("al", "alphabet")
