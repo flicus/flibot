@@ -1,0 +1,1 @@
+bot: java -jar starter/build/libs/starter-3.2.1-all.jar

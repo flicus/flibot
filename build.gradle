@@ -52,6 +52,10 @@ task wrapper(type: Wrapper) {
     gradleVersion = '2.0'
 }
 
+task stage() {
+    dependsOn shadowJar
+}
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
