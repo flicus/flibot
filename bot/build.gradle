@@ -22,7 +22,6 @@
  */
 
 group 'schors'
-//version '1.0-SNAPSHOT'
 
 dependencies {
     compile project(':db')
@@ -33,4 +32,5 @@ dependencies {
     compile "org.apache.httpcomponents:httpmime:4.5.1"
     compile 'com.github.rubenlagus:TelegramBots:v2.3.3.2'
     compile 'org.jdom:jdom2:2.0.6'
+    compile 'com.google.guava:guava:19.0'
 }

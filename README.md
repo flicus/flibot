@@ -5,14 +5,14 @@ Allows to browse and download books from [Flibusta] (http://www.flibusta.is) lib
 ## Installation
 First of all ensure there is a tor instance installed and available for use. You also will need Java 8 to run the bot. There are several ways you may install this bot on your host:
 ### From the source code
-Make sure you have [Git] (https://git-scm.com/) and [Gradle] (http://www.gradle.org/) installed , then check out the bot source code to your host:
+Make sure you have [Git] (https://git-scm.com/) installed , then check out the bot source code to your host:
 ```
 git clone https://github.com/flicus/flibot
 ```
 next you need to build the bot from source codes:
 ```
 cd flibot
-gradle shadowJar
+gradlew shadowJar
 ```
 now you ready to start the bot, fat jar with all dependencies included are here starter/build/libs/starter-0.9.0-all.jar  
 ### Download jar file

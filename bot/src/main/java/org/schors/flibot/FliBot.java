@@ -53,6 +53,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 
 
+
 public class FliBot extends AbstractVerticle {
 
     //http://flibustahezeous3.onion/opds//search?searchType=authors&searchTerm=Толстой
@@ -67,12 +68,12 @@ public class FliBot extends AbstractVerticle {
     private TelegramBotsApi telegram = new TelegramBotsApi();
     private HttpClientContext context = HttpClientContext.create();
     private CloseableHttpClient httpclient;
+    private URLCache urlCache = new URLCache();
 
     @Override
     public void start() {
 
         final DBService db = DBService.createProxy(vertx, "db-service");
-
 
         InetSocketAddress socksaddr = new InetSocketAddress(config().getString("torhost"), Integer.parseInt(config().getString("torport")));
         context.setAttribute("socks.address", socksaddr);
@@ -137,10 +138,10 @@ public class FliBot extends AbstractVerticle {
                     if (update.hasMessage() && update.getMessage().hasText()) {
                         String cmd = update.getMessage().getText();
                         String userName = update.getMessage().getFrom().getUserName();
-                        db.isRegisterdUser(userName, resgistationRes -> {
-                            if (resgistationRes.succeeded() && resgistationRes.result().getBoolean("res")) {
+                        db.isRegisterdUser(userName, registrationRes -> {
+                            if (registrationRes.succeeded() && registrationRes.result().getBoolean("res")) {
                                 if (cmd.startsWith("/a")) {
-                                    getAuthor(cmd.substring(cmd.indexOf(" ") + 1).replaceAll(" ", "+"), event -> {
+                                    getAuthor(normalizeCmd(cmd), userName, event -> {
                                         if (event.succeeded()) {
                                             sendReply(update, (SendMessage) event.result());
                                         } else {
@@ -148,15 +149,15 @@ public class FliBot extends AbstractVerticle {
                                         }
                                     });
                                 } else if (cmd.startsWith("/b")) {
-                                    getBook(cmd.substring(cmd.indexOf(" ") + 1).replaceAll(" ", "+"), event -> {
+                                    getBook(normalizeCmd(cmd), userName, event -> {
                                         if (event.succeeded()) sendReply(update, (SendMessage) event.result());
                                     });
                                 } else if (cmd.startsWith("/c")) {
-                                    getCmd(PageParser.toURL(cmd.replace("/c", "").split("@")[0], false), event -> {
+                                    getCmd(normalizeCmd(cmd), userName, event -> {
                                         if (event.succeeded()) sendReply(update, (SendMessage) event.result());
                                     });
                                 } else if (cmd.startsWith("/d")) {
-                                    download(PageParser.toURL(cmd.replace("/d", "").split("@")[0], true), event -> {
+                                    download(normalizeCmd(cmd), userName, event -> {
                                         if (event.succeeded()) {
                                             sendFile(update, (SendDocument) event.result());
                                         } else {
@@ -164,23 +165,23 @@ public class FliBot extends AbstractVerticle {
                                         }
                                     });
                                 } else if (cmd.startsWith("/k")) {
-                                    catalog(event -> {
+                                    catalog(userName, event -> {
                                         if (event.succeeded()) sendReply(update, (SendMessage) event.result());
                                     });
                                 } else if (cmd.startsWith("/r")) {
                                     if (userName.equals(config().getString("admin"))) {
-                                        db.registerUser(cmd.substring(cmd.indexOf(" ") + 1), res -> {
+                                        db.registerUser(normalizeCmd(cmd), res -> {
                                             sendReply(update, Boolean.toString(res.succeeded()));
                                         });
                                     }
                                 } else if (cmd.startsWith("/u")) {
                                     if (userName.equals(config().getString("admin"))) {
-                                        db.unregisterUser(cmd.substring(cmd.indexOf(" ") + 1), res -> {
+                                        db.unregisterUser(normalizeCmd(cmd), res -> {
                                             sendReply(update, Boolean.toString(res.succeeded()));
                                         });
                                     }
                                 } else {
-                                    getAuthor(cmd.substring(cmd.indexOf(" ") + 1).replaceAll(" ", "+"), event -> {
+                                    getAuthor(normalizeCmd(cmd), userName, event -> {
                                         if (event.succeeded()) {
                                             sendReply(update, (SendMessage) event.result());
                                         } else {
@@ -200,16 +201,17 @@ public class FliBot extends AbstractVerticle {
         }
     }
 
-    private void catalog(Handler<AsyncResult<Object>> handler) {
+    private void catalog(String userName, Handler<AsyncResult<Object>> handler) {
         vertx.executeBlocking(future -> {
-            SendMessage res = doGenericRequest(rootOPDS + "/opds");
+            SendMessage res = doGenericRequest(rootOPDS + "/opds", userName);
             future.complete(res);
         }, res -> {
             handler.handle(res);
         });
     }
 
-    private void download(String url, Handler<AsyncResult<Object>> handler) {
+    private void download(String cmd, String userName, Handler<AsyncResult<Object>> handler) {
+        String url = urlCache.getURL(userName, cmd);
         vertx.executeBlocking(future -> {
             HttpGet httpGet = new HttpGet(rootOPDS + url);
             try {
@@ -241,9 +243,10 @@ public class FliBot extends AbstractVerticle {
         });
     }
 
-    private void getCmd(String cmd, Handler<AsyncResult<Object>> handler) {
+    private void getCmd(String cmd, String userName, Handler<AsyncResult<Object>> handler) {
+        String url = urlCache.getURL(userName, cmd);
         vertx.executeBlocking(future -> {
-            SendMessage res = doGenericRequest(rootOPDS + cmd);
+            SendMessage res = doGenericRequest(rootOPDS + url, userName);
             future.complete(res);
         }, res -> {
             handler.handle(res);
@@ -251,25 +254,25 @@ public class FliBot extends AbstractVerticle {
     }
 
 
-    private void getAuthor(String author, Handler<AsyncResult<Object>> handler) {
+    private void getAuthor(String author, String userName, Handler<AsyncResult<Object>> handler) {
         vertx.executeBlocking(future -> {
-            SendMessage res = doGenericRequest(rootOPDS + "/opds" + String.format(authorSearch, author));
+            SendMessage res = doGenericRequest(rootOPDS + "/opds" + String.format(authorSearch, author), userName);
             future.complete(res);
         }, res -> {
             handler.handle(res);
         });
     }
 
-    private void getBook(String book, Handler<AsyncResult<Object>> handler) {
+    private void getBook(String book, String userName, Handler<AsyncResult<Object>> handler) {
         vertx.executeBlocking(future -> {
-            SendMessage res = doGenericRequest(rootOPDS + "/opds" + String.format(bookSearch, book));
+            SendMessage res = doGenericRequest(rootOPDS + "/opds" + String.format(bookSearch, book), userName);
             future.complete(res);
         }, res -> {
             handler.handle(res);
         });
     }
 
-    private SendMessage doGenericRequest(String url) {
+    private SendMessage doGenericRequest(String url, String userName) {
 
         System.out.println(url);
         SendMessage sendMessage = new SendMessage();
@@ -293,12 +296,15 @@ public class FliBot extends AbstractVerticle {
                                 if (link.getTitle() != null) {
                                     sb.append(link.getTitle());
                                 }
-                                sb.append(" /c").append(PageParser.fromURL(link.getHref())).append("\n");
+                                String id = urlCache.putNewURL(userName, link.getHref());
+                                sb.append(" /c").append(id).append("\n");
                             });
                     entry.getLinks().stream()
                             .filter(l -> "http://opds-spec.org/acquisition/open-access".equals(l.getRel()))
                             .forEach(link -> {
-                                sb.append(link.getType().replace("application/", "")).append(" : /d").append(PageParser.fromURL(link.getHref())).append("\n");
+                                sb.append(link.getType().replace("application/", ""));
+                                String id = urlCache.putNewURL(userName, link.getHref());
+                                sb.append(" : /d").append(id).append("\n");
                             });
                     sb.append("\n");
                 });
@@ -309,6 +315,10 @@ public class FliBot extends AbstractVerticle {
             log.warn(e, e);
         }
         return sendMessage;
+    }
+
+    private String normalizeCmd(String cmd) {
+        return cmd.split("@")[0].substring(2).trim().replaceAll(" ", "+");
     }
 
 }

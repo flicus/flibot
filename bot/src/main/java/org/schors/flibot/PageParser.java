@@ -35,14 +35,14 @@ public class PageParser {
                         entry.setAuthor(author.getChild("name", e.getNamespace()).getText());
                     }
                     List<Element> links = e.getChildren("link", e.getNamespace());
-                    for (Element link : links) {
+                    links.stream().forEach(link -> {
                         Link _lnk = new Link();
                         _lnk.setTitle(link.getAttributeValue("title"));
-                        _lnk.setHref(fromURL(link.getAttributeValue("href")));
+                        _lnk.setHref(link.getAttributeValue("href"));
                         _lnk.setType(link.getAttributeValue("type"));
                         _lnk.setRel(link.getAttributeValue("rel"));
                         entry.getLinks().add(_lnk);
-                    }
+                    });
                     list.add(entry);
                 }
             }
@@ -54,37 +54,37 @@ public class PageParser {
         return list;
     }
 
-    public static String fromURL(String url) {
-        String res = null;
-        try {
-            res = URLDecoder.decode(url
-                    .replace("/opds", "")
-                    .replace("authorsequences", "as")
-                    .replace("authorsequenceless", "asl")
-                    .replace("author", "au")
-                    .replace("alphabet", "al")
-                    .replace("time", "t")
-                    .replaceAll("/", "_"), "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        return res;
-    }
-
-    public static String toURL(String cmd, boolean direct) {
-        if (direct) return cmd
-                .replaceAll("_", "/")
-                .replace("t", "time")
-                .replace("al", "alphabet")
-                .replace("au", "author")
-                .replace("asl", "authorsequenceless")
-                .replace("as", "authorsequences");
-        else return "/opds" + cmd
-                .replaceAll("_", "/")
-                .replace("t", "time")
-                .replace("al", "alphabet")
-                .replace("au", "author")
-                .replace("asl", "authorsequenceless")
-                .replace("as", "authorsequences");
-    }
+//    public static String fromURL(String url) {
+//        String res = null;
+//        try {
+//            res = URLDecoder.decode(url
+//                    .replace("/opds", "")
+//                    .replace("authorsequences", "as")
+//                    .replace("authorsequenceless", "asl")
+//                    .replace("author", "au")
+//                    .replace("alphabet", "al")
+//                    .replace("time", "t")
+//                    .replaceAll("/", "_"), "UTF-8");
+//        } catch (UnsupportedEncodingException e) {
+//            e.printStackTrace();
+//        }
+//        return res;
+//    }
+//
+//    public static String toURL(String cmd, boolean direct) {
+//        if (direct) return cmd
+//                .replaceAll("_", "/")
+//                .replace("t", "time")
+//                .replace("al", "alphabet")
+//                .replace("au", "author")
+//                .replace("asl", "authorsequenceless")
+//                .replace("as", "authorsequences");
+//        else return "/opds" + cmd
+//                .replaceAll("_", "/")
+//                .replace("t", "time")
+//                .replace("al", "alphabet")
+//                .replace("au", "author")
+//                .replace("asl", "authorsequenceless")
+//                .replace("as", "authorsequences");
+//    }
 }
