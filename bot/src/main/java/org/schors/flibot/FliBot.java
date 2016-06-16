@@ -180,7 +180,7 @@ public class FliBot extends AbstractVerticle {
                                         });
                                     }
                                 } else {
-                                    getAuthor(cmd.substring(cmd.indexOf(" ") + 1), event -> {
+                                    getAuthor(cmd.substring(cmd.indexOf(" ") + 1).replaceAll(" ", "+"), event -> {
                                         if (event.succeeded()) {
                                             sendReply(update, (SendMessage) event.result());
                                         } else {
