@@ -35,8 +35,8 @@ sourceSets {
 }
 
 dependencies {
-    compile "io.vertx:vertx-service-proxy:$version"
-    compile "io.vertx:vertx-codegen:$version"
+    compile "io.vertx:vertx-service-proxy:$vertxVersion"
+    compile "io.vertx:vertx-codegen:$vertxVersion"
     compile "org.json:json:20151123"
     compile 'com.h2database:h2:1.4.192'
 }
