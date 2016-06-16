@@ -66,7 +66,7 @@ subprojects {
         maven { url "https://jitpack.io" }
     }
 
-    version = "3.2.1"
+    version = "0.9.0"
 
     dependencies {
         compile "log4j:log4j:1.2.17"
