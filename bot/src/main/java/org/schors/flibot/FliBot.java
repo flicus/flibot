@@ -153,17 +153,27 @@ public class FliBot extends AbstractVerticle {
                                         if (event.succeeded()) sendReply(update, (SendMessage) event.result());
                                     });
                                 } else if (cmd.startsWith("/c")) {
-                                    getCmd(normalizeCmd(cmd), userName, event -> {
-                                        if (event.succeeded()) sendReply(update, (SendMessage) event.result());
-                                    });
+                                    String url = urlCache.getURL(userName, normalizeCmd(cmd));
+                                    if (url != null) {
+                                        getCmd(url, userName, event -> {
+                                            if (event.succeeded()) sendReply(update, (SendMessage) event.result());
+                                        });
+                                    } else {
+                                        sendReply(update, "Expired command");
+                                    }
                                 } else if (cmd.startsWith("/d")) {
-                                    download(normalizeCmd(cmd), userName, event -> {
-                                        if (event.succeeded()) {
-                                            sendFile(update, (SendDocument) event.result());
-                                        } else {
-                                            sendReply(update, "Error happened :(");
-                                        }
-                                    });
+                                    String url = urlCache.getURL(userName, normalizeCmd(cmd));
+                                    if (url != null) {
+                                        download(url, event -> {
+                                            if (event.succeeded()) {
+                                                sendFile(update, (SendDocument) event.result());
+                                            } else {
+                                                sendReply(update, "Error happened :(");
+                                            }
+                                        });
+                                    } else {
+                                        sendReply(update, "Expired command");
+                                    }
                                 } else if (cmd.startsWith("/k")) {
                                     catalog(userName, event -> {
                                         if (event.succeeded()) sendReply(update, (SendMessage) event.result());
@@ -210,8 +220,7 @@ public class FliBot extends AbstractVerticle {
         });
     }
 
-    private void download(String cmd, String userName, Handler<AsyncResult<Object>> handler) {
-        String url = urlCache.getURL(userName, cmd);
+    private void download(String url, Handler<AsyncResult<Object>> handler) {
         vertx.executeBlocking(future -> {
             HttpGet httpGet = new HttpGet(rootOPDS + url);
             try {
@@ -243,8 +252,7 @@ public class FliBot extends AbstractVerticle {
         });
     }
 
-    private void getCmd(String cmd, String userName, Handler<AsyncResult<Object>> handler) {
-        String url = urlCache.getURL(userName, cmd);
+    private void getCmd(String url, String userName, Handler<AsyncResult<Object>> handler) {
         vertx.executeBlocking(future -> {
             SendMessage res = doGenericRequest(rootOPDS + url, userName);
             future.complete(res);
@@ -252,7 +260,6 @@ public class FliBot extends AbstractVerticle {
             handler.handle(res);
         });
     }
-
 
     private void getAuthor(String author, String userName, Handler<AsyncResult<Object>> handler) {
         vertx.executeBlocking(future -> {
@@ -291,7 +298,7 @@ public class FliBot extends AbstractVerticle {
                     }
                     sb.append("\n");
                     entry.getLinks().stream()
-                            .filter((l) -> "application/atom+xml;profile=opds-catalog".equals(l.getType()))
+                            .filter((l) -> l.getType() != null && l.getType().toLowerCase().contains("opds-catalog"))
                             .forEach(link -> {
                                 if (link.getTitle() != null) {
                                     sb.append(link.getTitle());
@@ -300,7 +307,7 @@ public class FliBot extends AbstractVerticle {
                                 sb.append(" /c").append(id).append("\n");
                             });
                     entry.getLinks().stream()
-                            .filter(l -> "http://opds-spec.org/acquisition/open-access".equals(l.getRel()))
+                            .filter(l -> l.getRel() != null && l.getRel().contains("open-access"))
                             .forEach(link -> {
                                 sb.append(link.getType().replace("application/", ""));
                                 String id = urlCache.putNewURL(userName, link.getHref());
