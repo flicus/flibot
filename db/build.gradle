@@ -22,7 +22,6 @@
  */
 
 group 'schors'
-//version '1.0-SNAPSHOT'
 
 def generateSrcPath = "$buildDir/generated-src"
 def generatedSrcDir = file("$buildDir/generated-src")
