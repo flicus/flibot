@@ -56,6 +56,10 @@ task stage() {
     dependsOn shadowJar
 }
 
+task install() {
+    dependsOn shadowJar
+}
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
