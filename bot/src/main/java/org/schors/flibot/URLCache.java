@@ -6,9 +6,6 @@ import jersey.repackaged.com.google.common.cache.CacheBuilder;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by sskoptsov on 16.06.2016.
- */
 public class URLCache {
 
     private Map<String, Cache<String, String>> users = new HashMap<>();
@@ -18,7 +15,7 @@ public class URLCache {
 
     public String putNewURL(String userName, String url) {
         Cache<String, String> cache = users.getOrDefault(userName, CacheBuilder.newBuilder().maximumSize(1000).build());
-        String id = Integer.toString(url.hashCode());
+        String id = Integer.toHexString(url.hashCode());
         cache.put(id, url);
         return id;
     }
