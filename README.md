@@ -25,6 +25,7 @@ Before you will start the bot you need to do some configuration. Bot checking fo
 - torhost - host where tor installed 
 - torport - port of the tor
 - admin   - telegram username who will be admin for this bot instance
+
 ### bot.ini file example
 ```
 name=test_bot
