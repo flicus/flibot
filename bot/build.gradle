@@ -25,8 +25,8 @@ group 'schors'
 
 dependencies {
     compile project(':db')
-    compile "io.vertx:vertx-service-proxy:$vertxVersion"
-    compile "io.vertx:vertx-codegen:$vertxVersion"
+    compile "io.vertx:vertx-service-proxy:3.2.1"
+    compile "io.vertx:vertx-codegen:3.2.1"
     compile "org.json:json:20151123"
     compile "org.apache.httpcomponents:httpclient:4.5.1"
     compile "org.apache.httpcomponents:httpmime:4.5.1"
