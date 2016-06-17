@@ -16,7 +16,7 @@ gradlew shadowJar
 ```
 now you ready to start the bot, fat jar with all dependencies included are here starter/build/libs/starter-0.9.0-all.jar  
 ### Download jar file
- Download it from [Travis-ci](https://travis-ci.org/flicus/flibot)
+ Download it from [Release page](https://github.com/flicus/flibot/releases)
 ## Configuration
 Before you will start the bot you need to do some configuration. Bot checking for configuration parameters in the environment variables first. If there is flibot variable exist, all parameters will be read from the environment variables. Otherwise, bot searching for bot.ini file with these parameters.
 ### Parameters
@@ -24,7 +24,7 @@ Before you will start the bot you need to do some configuration. Bot checking fo
 - token   - telegram bot token
 - torhost - host where tor installed 
 - torport - port of the tor
-- admin   - telegram username who will be admin for this bot instance 
+- admin   - telegram username who will be admin for this bot instance
 ### bot.ini file example
 ```
 name=test_bot
