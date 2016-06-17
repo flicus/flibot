@@ -14,7 +14,11 @@ public class URLCache {
     }
 
     public String putNewURL(String userName, String url) {
-        Cache<String, String> cache = users.getOrDefault(userName, CacheBuilder.newBuilder().maximumSize(1000).build());
+        Cache<String, String> cache = users.get(userName);
+        if (cache == null) {
+            cache = CacheBuilder.newBuilder().maximumSize(1000).build();
+            users.put(userName, cache);
+        }
         String id = Integer.toHexString(url.hashCode());
         cache.put(id, url);
         return id;
