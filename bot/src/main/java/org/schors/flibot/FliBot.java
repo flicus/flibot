@@ -50,7 +50,6 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.InetSocketAddress;
-import java.util.List;
 
 
 
@@ -229,7 +228,10 @@ public class FliBot extends AbstractVerticle {
                     String fileName = "tmp";
                     if (url.contains("mobi")) {
                         String[] parts = url.split("/");
-                        fileName = parts[parts.length - 2] + "." + parts[parts.length - 1];
+                        fileName = parts[parts.length - 2] + "." + parts[parts.length - 1] + ".mobi";
+                    } else if (url.contains("djvu")) {
+                        String[] parts = url.split("/");
+                        fileName = parts[parts.length - 2] + "." + parts[parts.length - 1] + ".djvu";
                     } else {
                         String[] parts = url.split("/");
                         fileName = parts[parts.length - 2] + "." + parts[parts.length - 1] + ".zip";
@@ -290,8 +292,12 @@ public class FliBot extends AbstractVerticle {
                 StringBuilder sb = new StringBuilder();
                 HttpEntity ht = response.getEntity();
                 BufferedHttpEntity buf = new BufferedHttpEntity(ht);
-                List<Entry> list = PageParser.parse(buf.getContent());
-                list.stream().forEach(entry -> {
+                Page page = PageParser.parse(buf.getContent());
+                if (page.getTitle() != null) {
+                    sb.append("<b>").append(page.getTitle()).append("</b>\n");
+                }
+
+                page.getEntries().stream().forEach(entry -> {
                     sb.append("<b>").append(entry.getTitle()).append("</b>");
                     if (entry.getAuthor() != null) {
                         sb.append(" (").append(entry.getAuthor()).append(")");
@@ -315,6 +321,12 @@ public class FliBot extends AbstractVerticle {
                             });
                     sb.append("\n");
                 });
+                page.getLinks().stream()
+                        .filter((l) -> l.getRel().equals("next"))
+                        .forEach(lnk -> {
+                            String id = urlCache.putNewURL(userName, lnk.getHref());
+                            sb.append("next : /c").append(id).append("\n");
+                        });
                 sendMessage.setText(sb.toString());
                 sendMessage.enableHtml(true);
             }
