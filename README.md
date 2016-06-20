@@ -38,3 +38,11 @@ admin=myusername
 ```
 java -jar starter-0.9.0-all.jar &
 ```
+### Supported commands
+```
+/a <author name>    - search by book author name
+/b <book title>     - search by the book title
+/k                  - OPDS catalog browsing
+/r <username>       - add username to the allowed list (available only to the bot admin)
+/u <username>       - remove username from the allowed list (available only to the bot admin)
+```
