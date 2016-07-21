@@ -45,6 +45,7 @@ import org.apache.http.ssl.SSLContexts;
 import org.apache.log4j.Logger;
 import org.telegram.telegrambots.TelegramApiException;
 import org.telegram.telegrambots.TelegramBotsApi;
+import org.telegram.telegrambots.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.api.methods.send.SendDocument;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
@@ -131,6 +132,17 @@ public class FliBot extends AbstractVerticle {
                     return result;
                 }
 
+                private void sendBusy(Update update) {
+                    SendChatAction sca = new SendChatAction();
+                    sca.setChatId(update.getMessage().getChatId().toString());
+                    sca.setAction("upload_document");
+                    try {
+                        sendChatAction(new SendChatAction());
+                    } catch (TelegramApiException e) {
+                        log.error(e, e);
+                    }
+                }
+
                 @Override
                 public String getBotUsername() {
                     return config().getString("name");
@@ -144,6 +156,7 @@ public class FliBot extends AbstractVerticle {
                 @Override
                 public void onUpdateReceived(Update update) {
                     if (update.hasMessage() && update.getMessage().hasText()) {
+                        sendBusy(update);
                         String cmd = update.getMessage().getText();
                         String userName = update.getMessage().getFrom().getUserName();
                         db.isRegisterdUser(userName, registrationRes -> {
@@ -304,46 +317,49 @@ public class FliBot extends AbstractVerticle {
                 HttpEntity ht = response.getEntity();
                 BufferedHttpEntity buf = new BufferedHttpEntity(ht);
                 Page page = PageParser.parse(buf.getContent());
-                if (page.getTitle() != null) {
-                    sb.append("<b>").append(page.getTitle()).append("</b>\n");
-                }
-
-                page.getEntries().stream().forEach(entry -> {
-                    sb.append("<b>").append(entry.getTitle()).append("</b>");
-                    if (entry.getAuthor() != null) {
-                        sb.append(" (").append(entry.getAuthor()).append(")");
+                if (page.getEntries() != null && page.getEntries().size() > 0) {
+                    if (page.getTitle() != null) {
+                        sb.append("<b>").append(page.getTitle()).append("</b>\n");
                     }
-                    sb.append("\n");
-                    entry.getLinks().stream()
-                            .filter((l) -> l.getType() != null && l.getType().toLowerCase().contains("opds-catalog"))
-                            .forEach(link -> {
-                                if (link.getTitle() != null) {
-                                    sb.append(link.getTitle());
-                                }
+                    page.getEntries().stream().forEach(entry -> {
+                        sb.append("<b>").append(entry.getTitle()).append("</b>");
+                        if (entry.getAuthor() != null) {
+                            sb.append(" (").append(entry.getAuthor()).append(")");
+                        }
+                        sb.append("\n");
+                        entry.getLinks().stream()
+                                .filter((l) -> l.getType() != null && l.getType().toLowerCase().contains("opds-catalog"))
+                                .forEach(link -> {
+                                    if (link.getTitle() != null) {
+                                        sb.append(link.getTitle());
+                                    }
 //                                String id = urlCache.putNewURL(userName, link.getHref());
-                                String id = Integer.toHexString(link.getHref().hashCode());
-                                urlCache.put(id, link.getHref());
-                                sb.append(" /c").append(id).append("\n");
-                            });
-                    entry.getLinks().stream()
-                            .filter(l -> l.getRel() != null && l.getRel().contains("open-access"))
-                            .forEach(link -> {
+                                    String id = Integer.toHexString(link.getHref().hashCode());
+                                    urlCache.put(id, link.getHref());
+                                    sb.append(" /c").append(id).append("\n");
+                                });
+                        entry.getLinks().stream()
+                                .filter(l -> l.getRel() != null && l.getRel().contains("open-access"))
+                                .forEach(link -> {
 //                                String id = urlCache.putNewURL(userName, link.getHref());
-                                sb.append(link.getType().replace("application/", ""));
-                                String id = Integer.toHexString(link.getHref().hashCode());
-                                urlCache.put(id, link.getHref());
-                                sb.append(" : /d").append(id).append("\n");
-                            });
-                    sb.append("\n");
-                });
-                page.getLinks().stream()
-                        .filter((l) -> l.getRel().equals("next"))
-                        .forEach(lnk -> {
+                                    sb.append(link.getType().replace("application/", ""));
+                                    String id = Integer.toHexString(link.getHref().hashCode());
+                                    urlCache.put(id, link.getHref());
+                                    sb.append(" : /d").append(id).append("\n");
+                                });
+                        sb.append("\n");
+                    });
+                    page.getLinks().stream()
+                            .filter((l) -> l.getRel().equals("next"))
+                            .forEach(lnk -> {
 //                            String id = urlCache.putNewURL(userName, lnk.getHref());
-                            String id = Integer.toHexString(lnk.getHref().hashCode());
-                            urlCache.put(id, lnk.getHref());
-                            sb.append("next : /c").append(id).append("\n");
-                        });
+                                String id = Integer.toHexString(lnk.getHref().hashCode());
+                                urlCache.put(id, lnk.getHref());
+                                sb.append("next : /c").append(id).append("\n");
+                            });
+                } else {
+                    sb.append("Nothing found");
+                }
                 sendMessage.setText(sb.toString());
                 sendMessage.enableHtml(true);
             }
