@@ -306,8 +306,6 @@ public class FliBot extends AbstractVerticle {
     }
 
     private SendMessage doGenericRequest(String url) {
-
-        System.out.println(url);
         SendMessage sendMessage = new SendMessage();
         HttpGet httpGet = new HttpGet(url);
         try {
@@ -333,7 +331,6 @@ public class FliBot extends AbstractVerticle {
                                     if (link.getTitle() != null) {
                                         sb.append(link.getTitle());
                                     }
-//                                String id = urlCache.putNewURL(userName, link.getHref());
                                     String id = Integer.toHexString(link.getHref().hashCode());
                                     urlCache.put(id, link.getHref());
                                     sb.append(" /c").append(id).append("\n");
@@ -341,7 +338,6 @@ public class FliBot extends AbstractVerticle {
                         entry.getLinks().stream()
                                 .filter(l -> l.getRel() != null && l.getRel().contains("open-access"))
                                 .forEach(link -> {
-//                                String id = urlCache.putNewURL(userName, link.getHref());
                                     sb.append(link.getType().replace("application/", ""));
                                     String id = Integer.toHexString(link.getHref().hashCode());
                                     urlCache.put(id, link.getHref());
@@ -352,7 +348,6 @@ public class FliBot extends AbstractVerticle {
                     page.getLinks().stream()
                             .filter((l) -> l.getRel().equals("next"))
                             .forEach(lnk -> {
-//                            String id = urlCache.putNewURL(userName, lnk.getHref());
                                 String id = Integer.toHexString(lnk.getHref().hashCode());
                                 urlCache.put(id, lnk.getHref());
                                 sb.append("next : /c").append(id).append("\n");
