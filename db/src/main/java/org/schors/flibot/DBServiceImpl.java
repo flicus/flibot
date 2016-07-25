@@ -1,19 +1,45 @@
+/*
+ *
+ *  The MIT License (MIT)
+ *
+ *  Copyright (c) 2016 schors
+ *   Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *   The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
+ */
+
 package org.schors.flibot;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import org.apache.log4j.Logger;
 
 import java.sql.*;
 
 public class DBServiceImpl implements DBService {
 
+    private static final Logger log = Logger.getLogger(DBServiceImpl.class);
     private final String JDBC_DRIVER_NAME = "org.h2.Driver";
     private final String JDBC_URL = "jdbc:h2:./flibot";
     private final String JDBC_USER = "sa";
     private final String JDBC_PASSWORD = "";
-
     private Connection connection;
     private Vertx vertx;
 
@@ -96,9 +122,8 @@ public class DBServiceImpl implements DBService {
             ps.setString(1, admin);
             ps.execute();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e, e);
         }
-
     }
 
     public boolean isRegisterdUser(String userName) {
@@ -111,7 +136,7 @@ public class DBServiceImpl implements DBService {
                 result = true;
             }
         } catch (Exception e) {
-
+            log.error(e, e);
         }
         return result;
     }
@@ -122,7 +147,7 @@ public class DBServiceImpl implements DBService {
             ps.setString(1, username);
             ps.execute();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e, e);
         }
     }
 
@@ -132,7 +157,7 @@ public class DBServiceImpl implements DBService {
             ps.setString(1, username);
             ps.execute();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e, e);
         }
     }
 
