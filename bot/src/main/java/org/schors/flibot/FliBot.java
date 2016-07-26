@@ -137,7 +137,7 @@ public class FliBot extends AbstractVerticle {
                     sca.setChatId(update.getMessage().getChatId().toString());
                     sca.setAction("upload_document");
                     try {
-                        sendChatAction(new SendChatAction());
+                        sendChatAction(sca);
                     } catch (TelegramApiException e) {
                         log.error(e, e);
                     }
