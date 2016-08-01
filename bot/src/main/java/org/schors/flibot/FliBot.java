@@ -270,7 +270,7 @@ public class FliBot extends AbstractVerticle {
                                         KeyboardButton authorButton = new KeyboardButton();
                                         authorButton.setText("Author");
                                         KeyboardButton bookButton = new KeyboardButton();
-                                        authorButton.setText("Book");
+                                        bookButton.setText("Book");
                                         KeyboardRow keyboardRow = new KeyboardRow();
                                         keyboardRow.add(authorButton);
                                         keyboardRow.add(bookButton);
