@@ -50,12 +50,18 @@ import org.telegram.telegrambots.api.methods.send.SendDocument;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
+import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.InetSocketAddress;
-
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class FliBot extends AbstractVerticle {
@@ -73,8 +79,8 @@ public class FliBot extends AbstractVerticle {
     private HttpClientContext context;
     private CloseableHttpClient httpclient;
     private DBService db;
-    //    private URLCache urlCache = new URLCache();
     private Cache<String, String> urlCache;
+    private Map<String, Search> searches = new ConcurrentHashMap<>();
 
     @Override
     public void start() {
@@ -162,19 +168,40 @@ public class FliBot extends AbstractVerticle {
                         db.isRegisterdUser(userName, registrationRes -> {
                             if (registrationRes.succeeded() && registrationRes.result().getBoolean("res")) {
                                 if (cmd.startsWith("/a")) {
-                                    getAuthor(normalizeCmd(cmd), event -> {
-                                        if (event.succeeded()) {
-                                            sendReply(update, (SendMessage) event.result());
-                                        } else {
-                                            sendReply(update, "Error happened :(");
-                                        }
-                                    });
+                                    Search search = searches.get(userName);
+                                    if (search != null) {
+                                        searches.remove(userName);
+                                        getAuthor(search.getToSearch(), event -> {
+                                            if (event.succeeded()) {
+                                                sendReply(update, (SendMessage) event.result());
+                                            } else {
+                                                sendReply(update, "Error happened :(");
+                                            }
+                                        });
+                                    } else {
+                                        search = new Search();
+                                        search.setSearchType(SearchType.AUTHOR);
+                                        searches.put(userName, search);
+                                        sendReply(update, "Please enter the author name to search");
+                                    }
                                 } else if (cmd.startsWith("/b")) {
-                                    getBook(normalizeCmd(cmd), event -> {
-                                        if (event.succeeded()) sendReply(update, (SendMessage) event.result());
-                                    });
+                                    Search search = searches.get(userName);
+                                    if (search != null) {
+                                        searches.remove(userName);
+                                        getBook(search.getToSearch(), event -> {
+                                            if (event.succeeded()) {
+                                                sendReply(update, (SendMessage) event.result());
+                                            } else {
+                                                sendReply(update, "Error happened :(");
+                                            }
+                                        });
+                                    } else {
+                                        search = new Search();
+                                        search.setSearchType(SearchType.BOOK);
+                                        searches.put(userName, search);
+                                        sendReply(update, "Please enter the book name to search");
+                                    }
                                 } else if (cmd.startsWith("/c")) {
-//                                    String url = urlCache.getURL(userName, normalizeCmd(cmd));
                                     String url = urlCache.getIfPresent(normalizeCmd(cmd));
                                     if (url != null) {
                                         getCmd(url, event -> {
@@ -184,7 +211,6 @@ public class FliBot extends AbstractVerticle {
                                         sendReply(update, "Expired command");
                                     }
                                 } else if (cmd.startsWith("/d")) {
-//                                    String url = urlCache.getURL(userName, normalizeCmd(cmd));
                                     String url = urlCache.getIfPresent(normalizeCmd(cmd));
                                     if (url != null) {
                                         download(url, event -> {
@@ -214,13 +240,50 @@ public class FliBot extends AbstractVerticle {
                                         });
                                     }
                                 } else {
-                                    getAuthor(normalizeCmd(cmd), event -> {
-                                        if (event.succeeded()) {
-                                            sendReply(update, (SendMessage) event.result());
-                                        } else {
-                                            sendReply(update, "Error happened :(");
+                                    Search search = searches.get(userName);
+                                    if (search != null) {
+                                        searches.remove(userName);
+                                        switch (search.getSearchType()) {
+                                            case AUTHOR: {
+                                                getAuthor(normalizeCmd(cmd), event -> {
+                                                    if (event.succeeded()) {
+                                                        sendReply(update, (SendMessage) event.result());
+                                                    } else {
+                                                        sendReply(update, "Error happened :(");
+                                                    }
+                                                });
+                                            }
+                                            case BOOK: {
+                                                getBook(normalizeCmd(cmd), event -> {
+                                                    if (event.succeeded()) {
+                                                        sendReply(update, (SendMessage) event.result());
+                                                    } else {
+                                                        sendReply(update, "Error happened :(");
+                                                    }
+                                                });
+                                            }
                                         }
-                                    });
+                                    } else {
+                                        search = new Search();
+                                        search.setToSearch(normalizeCmd(cmd));
+                                        searches.put(userName, search);
+                                        KeyboardButton authorButton = new KeyboardButton();
+                                        authorButton.setText("Author");
+                                        KeyboardButton bookButton = new KeyboardButton();
+                                        authorButton.setText("Book");
+                                        KeyboardRow keyboardRow = new KeyboardRow();
+                                        keyboardRow.add(authorButton);
+                                        keyboardRow.add(bookButton);
+                                        List<KeyboardRow> keyboardRows = new ArrayList<KeyboardRow>();
+                                        keyboardRows.add(keyboardRow);
+                                        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+                                        keyboardMarkup.setKeyboard(keyboardRows);
+                                        SendMessage sendMessage = new SendMessage();
+                                        sendMessage.setChatId(update.getMessage().getChatId().toString());
+                                        sendMessage.setReplayMarkup(keyboardMarkup);
+                                        sendMessage.setText("What to search, author or book?");
+                                        sendReply(update, sendMessage);
+                                    }
                                 }
                             } else {
                                 sendReply(update, "I do not talk to strangers");
