@@ -167,7 +167,7 @@ public class FliBot extends AbstractVerticle {
                         String userName = update.getMessage().getFrom().getUserName();
                         db.isRegisterdUser(userName, registrationRes -> {
                             if (registrationRes.succeeded() && registrationRes.result().getBoolean("res")) {
-                                if (cmd.startsWith("/a")) {
+                                if (cmd.startsWith("/author")) {
                                     Search search = searches.get(userName);
                                     if (search != null) {
                                         searches.remove(userName);
@@ -184,7 +184,7 @@ public class FliBot extends AbstractVerticle {
                                         searches.put(userName, search);
                                         sendReply(update, "Please enter the author name to search");
                                     }
-                                } else if (cmd.startsWith("/b")) {
+                                } else if (cmd.startsWith("/book")) {
                                     Search search = searches.get(userName);
                                     if (search != null) {
                                         searches.remove(userName);
@@ -268,9 +268,9 @@ public class FliBot extends AbstractVerticle {
                                         search.setToSearch(normalizeCmd(cmd));
                                         searches.put(userName, search);
                                         KeyboardButton authorButton = new KeyboardButton();
-                                        authorButton.setText("Author");
+                                        authorButton.setText("/author");
                                         KeyboardButton bookButton = new KeyboardButton();
-                                        bookButton.setText("Book");
+                                        bookButton.setText("/book");
                                         KeyboardRow keyboardRow = new KeyboardRow();
                                         keyboardRow.add(authorButton);
                                         keyboardRow.add(bookButton);
@@ -278,6 +278,8 @@ public class FliBot extends AbstractVerticle {
                                         keyboardRows.add(keyboardRow);
                                         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
                                         keyboardMarkup.setKeyboard(keyboardRows);
+                                        keyboardMarkup.setResizeKeyboard(true);
+                                        keyboardMarkup.setSelective(true);
                                         SendMessage sendMessage = new SendMessage();
                                         sendMessage.setChatId(update.getMessage().getChatId().toString());
                                         sendMessage.setReplayMarkup(keyboardMarkup);
