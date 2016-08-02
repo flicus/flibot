@@ -165,6 +165,7 @@ public class FliBot extends AbstractVerticle {
                         sendBusy(update);
                         String cmd = update.getMessage().getText();
                         String userName = update.getMessage().getFrom().getUserName();
+                        log.warn("onUpdate: " + cmd + ", " + userName);
                         db.isRegisterdUser(userName, registrationRes -> {
                             if (registrationRes.succeeded() && registrationRes.result().getBoolean("res")) {
                                 if (cmd.startsWith("/author")) {
@@ -252,6 +253,7 @@ public class FliBot extends AbstractVerticle {
                                                         sendReply(update, "Error happened :(");
                                                     }
                                                 });
+                                                break;
                                             }
                                             case BOOK: {
                                                 getBook(normalizeCmd(cmd), event -> {
@@ -261,6 +263,7 @@ public class FliBot extends AbstractVerticle {
                                                         sendReply(update, "Error happened :(");
                                                     }
                                                 });
+                                                break;
                                             }
                                         }
                                     } else {
@@ -371,6 +374,7 @@ public class FliBot extends AbstractVerticle {
     }
 
     private SendMessage doGenericRequest(String url) {
+//        log.debug("doGeneric: "+url);
         SendMessage sendMessage = new SendMessage();
         HttpGet httpGet = new HttpGet(url);
         try {
