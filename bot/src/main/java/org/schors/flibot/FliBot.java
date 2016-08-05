@@ -261,7 +261,7 @@ public class FliBot extends AbstractVerticle {
                                         searches.remove(userName);
                                         switch (search.getSearchType()) {
                                             case AUTHOR: {
-                                                getAuthor(normalizeCmd(cmd), event -> {
+                                                getAuthor(cmd.trim().replaceAll(" ", "+"), event -> {
                                                     if (event.succeeded()) {
                                                         sendReply(update, (SendMessage) event.result());
                                                     } else {
@@ -271,7 +271,7 @@ public class FliBot extends AbstractVerticle {
                                                 break;
                                             }
                                             case BOOK: {
-                                                getBook(normalizeCmd(cmd), event -> {
+                                                getBook(cmd.trim().replaceAll(" ", "+"), event -> {
                                                     if (event.succeeded()) {
                                                         sendReply(update, (SendMessage) event.result());
                                                     } else {
@@ -283,7 +283,7 @@ public class FliBot extends AbstractVerticle {
                                         }
                                     } else {
                                         search = new Search();
-                                        search.setToSearch(normalizeCmd(cmd));
+                                        search.setToSearch(cmd.trim().replaceAll(" ", "+"));
                                         searches.put(userName, search);
                                         KeyboardButton authorButton = new KeyboardButton();
                                         authorButton.setText("/author");
