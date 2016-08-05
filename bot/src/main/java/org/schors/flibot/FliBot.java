@@ -62,6 +62,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 
 public class FliBot extends AbstractVerticle {
@@ -224,6 +226,19 @@ public class FliBot extends AbstractVerticle {
                                     } else {
                                         sendReply(update, "Expired command");
                                     }
+                                } else if (cmd.startsWith("/z")) {
+                                    String url = urlCache.getIfPresent(normalizeCmd(cmd));
+                                    if (url != null) {
+                                        downloadz(url, event -> {
+                                            if (event.succeeded()) {
+                                                sendFile(update, (SendDocument) event.result());
+                                            } else {
+                                                sendReply(update, "Error happened :(");
+                                            }
+                                        });
+                                    } else {
+                                        sendReply(update, "Expired command");
+                                    }
                                 } else if (cmd.startsWith("/k")) {
                                     catalog(event -> {
                                         if (event.succeeded()) sendReply(update, (SendMessage) event.result());
@@ -306,6 +321,40 @@ public class FliBot extends AbstractVerticle {
         vertx.executeBlocking(future -> {
             SendMessage res = doGenericRequest(rootOPDS + "/opds");
             future.complete(res);
+        }, res -> {
+            handler.handle(res);
+        });
+    }
+
+    private void downloadz(String url, Handler<AsyncResult<Object>> handler) {
+        vertx.executeBlocking(future -> {
+            HttpGet httpGet = new HttpGet(rootOPDS + url);
+            try {
+                CloseableHttpResponse response = httpclient.execute(httpGet, context);
+                if (response.getStatusLine().getStatusCode() == 200) {
+                    HttpEntity ht = response.getEntity();
+                    ZipInputStream zip = new ZipInputStream(ht.getContent());
+                    ZipEntry entry = zip.getNextEntry();
+                    File book = File.createTempFile("flibot_" + Long.toHexString(System.currentTimeMillis()), null);
+
+                    byte[] buffer = new byte[2048];
+                    FileOutputStream fileOutputStream = new FileOutputStream(book);
+                    int len = 0;
+                    while ((len = zip.read(buffer)) > 0) {
+                        fileOutputStream.write(buffer, 0, len);
+                    }
+                    fileOutputStream.close();
+                    zip.close();
+
+                    final SendDocument sendDocument = new SendDocument();
+                    sendDocument.setNewDocument(book.getAbsolutePath(), entry.getName());
+                    sendDocument.setCaption("book");
+                    future.complete(sendDocument);
+                }
+            } catch (Exception e) {
+                log.warn(e, e);
+                future.fail(e);
+            }
         }, res -> {
             handler.handle(res);
         });
@@ -407,10 +456,15 @@ public class FliBot extends AbstractVerticle {
                         entry.getLinks().stream()
                                 .filter(l -> l.getRel() != null && l.getRel().contains("open-access"))
                                 .forEach(link -> {
-                                    sb.append(link.getType().replace("application/", ""));
+                                    String type = link.getType().replace("application/", "");
+                                    sb.append(type);
                                     String id = Integer.toHexString(link.getHref().hashCode());
                                     urlCache.put(id, link.getHref());
                                     sb.append(" : /d").append(id).append("\n");
+                                    if ("fb2+zip".equals(type)) {
+                                        sb.append("fb2").append(" : /z").append(id).append("\n");
+
+                                    }
                                 });
                         sb.append("\n");
                     });
