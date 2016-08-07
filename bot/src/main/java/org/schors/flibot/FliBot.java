@@ -464,6 +464,8 @@ public class FliBot extends AbstractVerticle {
                                     if ("fb2+zip".equals(type)) {
                                         sb.append("fb2").append(" : /z").append(id).append("\n");
 
+                                    } else if ("epub+zip".equals(type)) {
+                                        sb.append("epub").append(" : /z").append(id).append("\n");
                                     }
                                 });
                         sb.append("\n");
