@@ -104,7 +104,7 @@ public class FliBot extends AbstractVerticle {
         try {
             telegram.registerBot(new TelegramLongPollingBot() {
 
-                private Message sendReply(Update update, String res) {
+                private void sendReply(Update update, String res) {
                     Message result = null;
                     SendMessage message = new SendMessage()
                             .setChatId(String.valueOf(update.getMessage().getChatId()))
@@ -115,16 +115,29 @@ public class FliBot extends AbstractVerticle {
                     } catch (TelegramApiException e) {
                         log.error(e, e);
                     }
-                    return result;
+//                    return result;
                 }
 
-                private Message sendReply(Update update, SendMessage res) {
+                private void sendReply(Update update, SendMessage res) {
                     Message result = null;
                     res.setChatId(String.valueOf(update.getMessage().getChatId()));
                     try {
                         result = sendMessage(res);
                     } catch (TelegramApiException e) {
                         log.error(e, e);
+                    }
+//                    return result;
+                }
+
+                private Message sendReply(Update update, SendMessageList res) {
+                    Message result = null;
+                    for (SendMessage sm : res.getMessages()) {
+                        sm.setChatId(String.valueOf(update.getMessage().getChatId()));
+                        try {
+                            result = sendMessage(sm);
+                        } catch (TelegramApiException e) {
+                            log.error(e, e);
+                        }
                     }
                     return result;
                 }
@@ -176,7 +189,7 @@ public class FliBot extends AbstractVerticle {
                                         searches.remove(userName);
                                         getAuthor(search.getToSearch(), event -> {
                                             if (event.succeeded()) {
-                                                sendReply(update, (SendMessage) event.result());
+                                                sendReply(update, (SendMessageList) event.result());
                                             } else {
                                                 sendReply(update, "Error happened :(");
                                             }
@@ -193,7 +206,7 @@ public class FliBot extends AbstractVerticle {
                                         searches.remove(userName);
                                         getBook(search.getToSearch(), event -> {
                                             if (event.succeeded()) {
-                                                sendReply(update, (SendMessage) event.result());
+                                                sendReply(update, (SendMessageList) event.result());
                                             } else {
                                                 sendReply(update, "Error happened :(");
                                             }
@@ -208,7 +221,7 @@ public class FliBot extends AbstractVerticle {
                                     String url = urlCache.getIfPresent(normalizeCmd(cmd));
                                     if (url != null) {
                                         getCmd(url, event -> {
-                                            if (event.succeeded()) sendReply(update, (SendMessage) event.result());
+                                            if (event.succeeded()) sendReply(update, (SendMessageList) event.result());
                                         });
                                     } else {
                                         sendReply(update, "Expired command");
@@ -241,7 +254,7 @@ public class FliBot extends AbstractVerticle {
                                     }
                                 } else if (cmd.startsWith("/k")) {
                                     catalog(event -> {
-                                        if (event.succeeded()) sendReply(update, (SendMessage) event.result());
+                                        if (event.succeeded()) sendReply(update, (SendMessageList) event.result());
                                     });
                                 } else if (cmd.startsWith("/r")) {
                                     if (userName.equals(config().getString("admin"))) {
@@ -263,7 +276,7 @@ public class FliBot extends AbstractVerticle {
                                             case AUTHOR: {
                                                 getAuthor(cmd.trim().replaceAll(" ", "+"), event -> {
                                                     if (event.succeeded()) {
-                                                        sendReply(update, (SendMessage) event.result());
+                                                        sendReply(update, (SendMessageList) event.result());
                                                     } else {
                                                         sendReply(update, "Error happened :(");
                                                     }
@@ -273,7 +286,7 @@ public class FliBot extends AbstractVerticle {
                                             case BOOK: {
                                                 getBook(cmd.trim().replaceAll(" ", "+"), event -> {
                                                     if (event.succeeded()) {
-                                                        sendReply(update, (SendMessage) event.result());
+                                                        sendReply(update, (SendMessageList) event.result());
                                                     } else {
                                                         sendReply(update, "Error happened :(");
                                                     }
@@ -319,7 +332,7 @@ public class FliBot extends AbstractVerticle {
 
     private void catalog(Handler<AsyncResult<Object>> handler) {
         vertx.executeBlocking(future -> {
-            SendMessage res = doGenericRequest(rootOPDS + "/opds");
+            SendMessageList res = doGenericRequest(rootOPDS + "/opds");
             future.complete(res);
         }, res -> {
             handler.handle(res);
@@ -397,7 +410,7 @@ public class FliBot extends AbstractVerticle {
 
     private void getCmd(String url, Handler<AsyncResult<Object>> handler) {
         vertx.executeBlocking(future -> {
-            SendMessage res = doGenericRequest(rootOPDS + url);
+            SendMessageList res = doGenericRequest(rootOPDS + url);
             future.complete(res);
         }, res -> {
             handler.handle(res);
@@ -406,7 +419,7 @@ public class FliBot extends AbstractVerticle {
 
     private void getAuthor(String author, Handler<AsyncResult<Object>> handler) {
         vertx.executeBlocking(future -> {
-            SendMessage res = doGenericRequest(rootOPDS + "/opds" + String.format(authorSearch, author));
+            SendMessageList res = doGenericRequest(rootOPDS + "/opds" + String.format(authorSearch, author));
             future.complete(res);
         }, res -> {
             handler.handle(res);
@@ -415,78 +428,76 @@ public class FliBot extends AbstractVerticle {
 
     private void getBook(String book, Handler<AsyncResult<Object>> handler) {
         vertx.executeBlocking(future -> {
-            SendMessage res = doGenericRequest(rootOPDS + "/opds" + String.format(bookSearch, book));
+            SendMessageList res = doGenericRequest(rootOPDS + "/opds" + String.format(bookSearch, book));
             future.complete(res);
         }, res -> {
             handler.handle(res);
         });
     }
 
-    private SendMessage doGenericRequest(String url) {
+    private SendMessageList doGenericRequest(String url) {
 //        log.debug("doGeneric: "+url);
-        SendMessage sendMessage = new SendMessage();
+        SendMessageList result = new SendMessageList(4096);
         HttpGet httpGet = new HttpGet(url);
         try {
             CloseableHttpResponse response = httpclient.execute(httpGet, context);
             if (response.getStatusLine().getStatusCode() == 200) {
-                StringBuilder sb = new StringBuilder();
                 HttpEntity ht = response.getEntity();
                 BufferedHttpEntity buf = new BufferedHttpEntity(ht);
                 Page page = PageParser.parse(buf.getContent());
                 if (page.getEntries() != null && page.getEntries().size() > 0) {
                     if (page.getTitle() != null) {
-                        sb.append("<b>").append(page.getTitle()).append("</b>\n");
+                        result.append("<b>").append(page.getTitle()).append("</b>\n");
                     }
                     page.getEntries().stream().forEach(entry -> {
-                        sb.append("<b>").append(entry.getTitle()).append("</b>");
+                        result.append("<b>").append(entry.getTitle()).append("</b>");
                         if (entry.getAuthor() != null) {
-                            sb.append(" (").append(entry.getAuthor()).append(")");
+                            result.append(" (").append(entry.getAuthor()).append(")");
                         }
-                        sb.append("\n");
+                        result.append("\n");
                         entry.getLinks().stream()
                                 .filter((l) -> l.getType() != null && l.getType().toLowerCase().contains("opds-catalog"))
                                 .forEach(link -> {
                                     if (link.getTitle() != null) {
-                                        sb.append(link.getTitle());
+                                        result.append(link.getTitle());
                                     }
                                     String id = Integer.toHexString(link.getHref().hashCode());
                                     urlCache.put(id, link.getHref());
-                                    sb.append(" /c").append(id).append("\n");
+                                    result.append(" /c").append(id).append("\n");
                                 });
                         entry.getLinks().stream()
                                 .filter(l -> l.getRel() != null && l.getRel().contains("open-access"))
                                 .forEach(link -> {
                                     String type = link.getType().replace("application/", "");
-                                    sb.append(type);
+                                    result.append(type);
                                     String id = Integer.toHexString(link.getHref().hashCode());
                                     urlCache.put(id, link.getHref());
-                                    sb.append(" : /d").append(id).append("\n");
+                                    result.append(" : /d").append(id).append("\n");
                                     if ("fb2+zip".equals(type)) {
-                                        sb.append("fb2").append(" : /z").append(id).append("\n");
+                                        result.append("fb2").append(" : /z").append(id).append("\n");
 
-                                    } else if ("epub+zip".equals(type)) {
-                                        sb.append("epub").append(" : /z").append(id).append("\n");
                                     }
+//                                    else if ("epub+zip".equals(type)) {
+//                                        sb.append("epub").append(" : /z").append(id).append("\n");
+//                                    }
                                 });
-                        sb.append("\n");
+                        result.append("\n");
                     });
                     page.getLinks().stream()
                             .filter((l) -> l.getRel().equals("next"))
                             .forEach(lnk -> {
                                 String id = Integer.toHexString(lnk.getHref().hashCode());
                                 urlCache.put(id, lnk.getHref());
-                                sb.append("next : /c").append(id).append("\n");
+                                result.append("next : /c").append(id).append("\n");
                             });
                 } else {
-                    sb.append("Nothing found");
+                    result.append("Nothing found");
                 }
-                sendMessage.setText(sb.toString());
-                sendMessage.enableHtml(true);
             }
         } catch (Exception e) {
             log.warn(e, e);
         }
-        return sendMessage;
+        return result;
     }
 
     private String normalizeCmd(String cmd) {
