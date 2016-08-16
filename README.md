@@ -39,10 +39,9 @@ admin=myusername
 java -jar starter-0.9.0-all.jar &
 ```
 ### Supported commands
-```
 Just type your favorite author name or book title in the chat, bot will ask where should it search this - among authors or book titles, additional commands supported:
+```
 /k                  - OPDS catalog browsing
 /r <username>       - add username to the allowed list (available only to the bot admin)
 /u <username>       - remove username from the allowed list (available only to the bot admin)
-
 ```
