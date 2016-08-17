@@ -22,6 +22,7 @@ Before you will start the bot you need to do some configuration. Bot checking fo
 ### Parameters
 - name    - telegram bot name
 - token   - telegram bot token
+- usetor  - using tor or not
 - torhost - host where tor installed 
 - torport - port of the tor
 - admin   - telegram username who will be admin for this bot instance
@@ -30,6 +31,7 @@ Before you will start the bot you need to do some configuration. Bot checking fo
 ```
 name=test_bot
 token=123456:blablabla
+usetor=true
 torhost=localhost
 torport=9050
 admin=myusername

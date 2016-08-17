@@ -20,6 +20,7 @@ gradlew shadowJar
 ### Параметры
 - name    - имя (username) бота
 - token   - токен бота
+- usetor  - использовать ли tor
 - torhost - хост где установлен tor 
 - torport - tcp порт tor
 - admin   - имя пользователя Telegram который будет администратором бота
@@ -28,6 +29,7 @@ gradlew shadowJar
 ```
 name=test_bot
 token=123456:blablabla
+usetor=true
 torhost=localhost
 torport=9050
 admin=myusername

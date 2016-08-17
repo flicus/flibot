@@ -37,8 +37,10 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContexts;
@@ -62,6 +64,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -92,14 +95,23 @@ public class FliBot extends AbstractVerticle {
         db = DBService.createProxy(vertx, "db-service");
         urlCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
-        InetSocketAddress socksaddr = new InetSocketAddress(config().getString("torhost"), Integer.parseInt(config().getString("torport")));
-        context.setAttribute("socks.address", socksaddr);
+        boolean usetor = config().getBoolean("usetor");
+        if (usetor) {
+            InetSocketAddress socksaddr = new InetSocketAddress(config().getString("torhost"), Integer.parseInt(config().getString("torport")));
+            context.setAttribute("socks.address", socksaddr);
 
-        Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
-                .register("http", new MyConnectionSocketFactory())
-                .register("https", new MySSLConnectionSocketFactory(SSLContexts.createSystemDefault())).build();
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg, new FakeDNSResolver());
-        httpclient = HttpClients.custom().setConnectionManager(cm).build();
+            Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
+                    .register("http", new MyConnectionSocketFactory())
+                    .register("https", new MySSLConnectionSocketFactory(SSLContexts.createSystemDefault())).build();
+            PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg, new FakeDNSResolver());
+            httpclient = HttpClients.custom().setConnectionManager(cm).build();
+        } else {
+            httpclient = HttpClientBuilder.create()
+                    .setSSLHostnameVerifier(new NoopHostnameVerifier())
+                    .setConnectionTimeToLive(70, TimeUnit.SECONDS)
+                    .setMaxConnTotal(100)
+                    .build();
+        }
 
         try {
             telegram.registerBot(new TelegramLongPollingBot() {
