@@ -48,7 +48,7 @@ public class Main {
             //get from env
             config.put("name", System.getenv("name"))
                     .put("token", System.getenv("token"))
-                    .put("usetor", System.getenv("usetor"))
+                    .put("usetor", Boolean.valueOf(System.getenv("usetor")))
                     .put("torhost", System.getenv("torhost"))
                     .put("torport", System.getenv("torport"))
                     .put("admin", System.getenv("admin"));
@@ -58,7 +58,7 @@ public class Main {
             p.load(new FileInputStream("bot.ini"));
             config.put("name", p.getProperty("name"))
                     .put("token", p.getProperty("token"))
-                    .put("usetor", p.getProperty("usetor"))
+                    .put("usetor", Boolean.valueOf(p.getProperty("usetor")))
                     .put("torhost", p.getProperty("torhost"))
                     .put("torport", p.getProperty("torport"))
                     .put("admin", p.getProperty("admin"));
