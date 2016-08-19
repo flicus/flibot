@@ -74,7 +74,8 @@ public class FliBot extends AbstractVerticle {
     //http://flibustahezeous3.onion/opds//search?searchType=authors&searchTerm=Толстой
     //http://flibustahezeous3.onion/search?searchType=books&searchTerm=криптономикон
 
-    private static final String rootOPDS = "http://flibustahezeous3.onion";
+    private static final String rootOPDStor = "http://flibustahezeous3.onion";
+    private static final String rootOPDShttp = "http://flibusta.is";
     private static final String authorSearch = "/search?searchType=authors&searchTerm=%s";
     private static final String bookSearch = "/search?searchType=books&searchTerm=%s";
 
@@ -86,6 +87,7 @@ public class FliBot extends AbstractVerticle {
     private DBService db;
     private Cache<String, String> urlCache;
     private Map<String, Search> searches = new ConcurrentHashMap<>();
+    private String rootOPDS;
 
     @Override
     public void start() {
@@ -97,6 +99,7 @@ public class FliBot extends AbstractVerticle {
 
         boolean usetor = config().getBoolean("usetor");
         if (usetor) {
+            rootOPDS = rootOPDStor;
             InetSocketAddress socksaddr = new InetSocketAddress(config().getString("torhost"), Integer.parseInt(config().getString("torport")));
             context.setAttribute("socks.address", socksaddr);
 
@@ -106,6 +109,7 @@ public class FliBot extends AbstractVerticle {
             PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg, new FakeDNSResolver());
             httpclient = HttpClients.custom().setConnectionManager(cm).build();
         } else {
+            rootOPDS = rootOPDShttp;
             httpclient = HttpClientBuilder.create()
                     .setSSLHostnameVerifier(new NoopHostnameVerifier())
                     .setConnectionTimeToLive(70, TimeUnit.SECONDS)
