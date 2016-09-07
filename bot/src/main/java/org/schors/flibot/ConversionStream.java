@@ -23,58 +23,49 @@
  *
  */
 
-if (!JavaVersion.current().java8Compatible) {
-    throw new IllegalStateException('''A Haiku:
-                                      |  This needs Java 8,
-                                      |  You are using something else,
-                                      |  Refresh. Try again.'''.stripMargin())
-}
+package org.schors.flibot;
 
-buildscript {
-    repositories {
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-    dependencies {
-        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
-    }
-}
-apply plugin: 'java'
-apply plugin: 'idea'
-apply plugin: "com.github.johnrengelman.shadow"
+import io.vertx.core.Handler;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.streams.ReadStream;
 
-shadowJar {
-    classifier = 'fat'
-    mergeServiceFiles {
-        include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
-    }
-}
+public abstract class ConversionStream implements ReadStream<Buffer> {
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.0'
-}
+    private ReadStream<Buffer> input;
 
-task stage() {
-    dependsOn shadowJar
-}
-
-task install() {
-    dependsOn shadowJar
-}
-
-subprojects {
-    apply plugin: 'java'
-    apply plugin: 'idea'
-    apply plugin: "com.github.johnrengelman.shadow"
-
-    repositories {
-        mavenCentral()
-        maven { url "https://jitpack.io" }
+    public ConversionStream(ReadStream<Buffer> input) {
+        this.input = input;
     }
 
-    version = "0.9.0"
-
-    dependencies {
-        compile "log4j:log4j:1.2.17"
-        compile "io.vertx:vertx-core:3.3.2"
+    @Override
+    public ReadStream<Buffer> exceptionHandler(Handler<Throwable> handler) {
+        input.exceptionHandler(event -> handler.handle(event));
+        return this;
     }
+
+    @Override
+    public ReadStream<Buffer> handler(Handler<Buffer> handler) {
+        input.handler(event -> handler.handle(converse(event)));
+        return this;
+    }
+
+    @Override
+    public ReadStream<Buffer> pause() {
+        input.pause();
+        return this;
+    }
+
+    @Override
+    public ReadStream<Buffer> resume() {
+        input.resume();
+        return this;
+    }
+
+    @Override
+    public ReadStream<Buffer> endHandler(Handler<Void> endHandler) {
+        input.endHandler(event -> endHandler.handle(event));
+        return this;
+    }
+
+    public abstract Buffer converse(Buffer input);
 }

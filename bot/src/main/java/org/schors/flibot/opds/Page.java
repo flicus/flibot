@@ -23,58 +23,43 @@
  *
  */
 
-if (!JavaVersion.current().java8Compatible) {
-    throw new IllegalStateException('''A Haiku:
-                                      |  This needs Java 8,
-                                      |  You are using something else,
-                                      |  Refresh. Try again.'''.stripMargin())
-}
+package org.schors.flibot.opds;
 
-buildscript {
-    repositories {
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-    dependencies {
-        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
-    }
-}
-apply plugin: 'java'
-apply plugin: 'idea'
-apply plugin: "com.github.johnrengelman.shadow"
+import java.util.ArrayList;
+import java.util.List;
 
-shadowJar {
-    classifier = 'fat'
-    mergeServiceFiles {
-        include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
-    }
-}
+/**
+ * Created by flicus on 19.06.16.
+ */
+public class Page {
+    private String title = null;
+    private List<Link> links = new ArrayList<>();
+    private List<Entry> entries = new ArrayList<>();
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.0'
-}
-
-task stage() {
-    dependsOn shadowJar
-}
-
-task install() {
-    dependsOn shadowJar
-}
-
-subprojects {
-    apply plugin: 'java'
-    apply plugin: 'idea'
-    apply plugin: "com.github.johnrengelman.shadow"
-
-    repositories {
-        mavenCentral()
-        maven { url "https://jitpack.io" }
+    public Page() {
     }
 
-    version = "0.9.0"
+    public String getTitle() {
+        return title;
+    }
 
-    dependencies {
-        compile "log4j:log4j:1.2.17"
-        compile "io.vertx:vertx-core:3.3.2"
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
+    }
+
+    public List<Entry> getEntries() {
+        return entries;
+    }
+
+    public void setEntries(List<Entry> entries) {
+        this.entries = entries;
     }
 }

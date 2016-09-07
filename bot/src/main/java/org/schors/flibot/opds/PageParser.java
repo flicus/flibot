@@ -23,7 +23,7 @@
  *
  */
 
-package org.schors.flibot;
+package org.schors.flibot.opds;
 
 import org.apache.log4j.Logger;
 import org.jdom2.Document;

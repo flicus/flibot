@@ -23,58 +23,22 @@
  *
  */
 
-if (!JavaVersion.current().java8Compatible) {
-    throw new IllegalStateException('''A Haiku:
-                                      |  This needs Java 8,
-                                      |  You are using something else,
-                                      |  Refresh. Try again.'''.stripMargin())
-}
+package org.schors.flibot;
 
-buildscript {
-    repositories {
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-    dependencies {
-        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
-    }
-}
-apply plugin: 'java'
-apply plugin: 'idea'
-apply plugin: "com.github.johnrengelman.shadow"
+public class BotException extends Exception {
 
-shadowJar {
-    classifier = 'fat'
-    mergeServiceFiles {
-        include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
-    }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.0'
-}
-
-task stage() {
-    dependsOn shadowJar
-}
-
-task install() {
-    dependsOn shadowJar
-}
-
-subprojects {
-    apply plugin: 'java'
-    apply plugin: 'idea'
-    apply plugin: "com.github.johnrengelman.shadow"
-
-    repositories {
-        mavenCentral()
-        maven { url "https://jitpack.io" }
+    public BotException() {
     }
 
-    version = "0.9.0"
+    public BotException(String message) {
+        super(message);
+    }
 
-    dependencies {
-        compile "log4j:log4j:1.2.17"
-        compile "io.vertx:vertx-core:3.3.2"
+    public BotException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public BotException(Throwable cause) {
+        super(cause);
     }
 }

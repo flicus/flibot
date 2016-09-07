@@ -23,13 +23,24 @@
  *
  */
 
-group 'schors'
+package org.schors.flibot;
 
-dependencies {
-    compile project(':db')
-    compile "io.vertx:vertx-service-proxy:3.3.2"
-    compile "io.vertx:vertx-codegen:3.3.2"
-    compile 'com.github.flicus:vertx-telegram-bot-api:v0.0.4'
-    compile 'org.jdom:jdom2:2.0.6'
-    compile 'com.google.guava:guava:19.0'
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.streams.ReadStream;
+
+import java.util.zip.ZipInputStream;
+
+public class ZipStream extends ConversionStream {
+
+
+    public ZipStream(ReadStream<Buffer> input) {
+        super(input);
+    }
+
+    @Override
+    public Buffer converse(Buffer input) {
+
+        ZipInputStream
+        return null;
+    }
 }

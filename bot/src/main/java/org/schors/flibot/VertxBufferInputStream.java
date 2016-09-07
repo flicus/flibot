@@ -23,13 +23,27 @@
  *
  */
 
-group 'schors'
+package org.schors.flibot;
 
-dependencies {
-    compile project(':db')
-    compile "io.vertx:vertx-service-proxy:3.3.2"
-    compile "io.vertx:vertx-codegen:3.3.2"
-    compile 'com.github.flicus:vertx-telegram-bot-api:v0.0.4'
-    compile 'org.jdom:jdom2:2.0.6'
-    compile 'com.google.guava:guava:19.0'
+import io.vertx.core.buffer.Buffer;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+public class VertxBufferInputStream extends InputStream {
+
+    private int pos = 0;
+    private Buffer buffer;
+
+    public VertxBufferInputStream(Buffer buffer) {
+        this.buffer = buffer;
+    }
+
+    @Override
+    public int read() throws IOException {
+        if (pos == buffer.length()) {
+            return -1;
+        }
+        return buffer.getInt(pos++);
+    }
 }

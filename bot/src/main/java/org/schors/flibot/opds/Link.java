@@ -23,58 +23,67 @@
  *
  */
 
-if (!JavaVersion.current().java8Compatible) {
-    throw new IllegalStateException('''A Haiku:
-                                      |  This needs Java 8,
-                                      |  You are using something else,
-                                      |  Refresh. Try again.'''.stripMargin())
-}
+package org.schors.flibot.opds;
 
-buildscript {
-    repositories {
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-    dependencies {
-        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
-    }
-}
-apply plugin: 'java'
-apply plugin: 'idea'
-apply plugin: "com.github.johnrengelman.shadow"
+/**
+ * Created by flicus on 14.05.16.
+ */
+public class Link {
+    private String href;
+    private String type;
+    private String title;
+    private String rel;
 
-shadowJar {
-    classifier = 'fat'
-    mergeServiceFiles {
-        include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
-    }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.0'
-}
-
-task stage() {
-    dependsOn shadowJar
-}
-
-task install() {
-    dependsOn shadowJar
-}
-
-subprojects {
-    apply plugin: 'java'
-    apply plugin: 'idea'
-    apply plugin: "com.github.johnrengelman.shadow"
-
-    repositories {
-        mavenCentral()
-        maven { url "https://jitpack.io" }
+    public Link(String href, String type, String title, String rel) {
+        this.href = href;
+        this.type = type;
+        this.title = title;
+        this.rel = rel;
     }
 
-    version = "0.9.0"
-
-    dependencies {
-        compile "log4j:log4j:1.2.17"
-        compile "io.vertx:vertx-core:3.3.2"
+    public Link() {
     }
+
+    public String getHref() {
+        return href;
+    }
+
+    public void setHref(String href) {
+        this.href = href;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    @Override
+    public String toString() {
+        return "Link{" +
+                "href='" + href + '\'' +
+                ", type='" + type + '\'' +
+                ", title='" + title + '\'' +
+                ", rel='" + rel + '\'' +
+                '}';
+    }
+
+    public String getRel() {
+        return rel;
+    }
+
+    public void setRel(String rel) {
+        this.rel = rel;
+    }
+
 }
