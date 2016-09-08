@@ -22,43 +22,24 @@
  *  SOFTWARE.
  */
 
-package org.schors.flibot;
+package org.schors.flibot.commands;
 
-import io.vertx.core.AsyncResult;
+import org.schors.flibot.Util;
+import org.schors.vertx.telegram.bot.commands.CommandContext;
 
-public class Util {
+public class RegisterUserCommand extends FlibotCommand {
 
-    public static final String HTTP_CLIENT = "httpClient";
-    public static final String CACHE = "cache";
-    public static final String SEARCHES = "searches";
-    public static final String DB = "db";
-    public static final String CONFIG = "config";
-
-    public static AsyncResult createResult(boolean success, Object result, Throwable e) {
-        return new AsyncResult() {
-            @Override
-            public Object result() {
-                return result;
-            }
-
-            @Override
-            public Throwable cause() {
-                return e;
-            }
-
-            @Override
-            public boolean succeeded() {
-                return success;
-            }
-
-            @Override
-            public boolean failed() {
-                return !success;
-            }
-        };
+    public RegisterUserCommand() {
+        super("^/r");
     }
 
-    public static String normalizeCmd(String cmd) {
-        return cmd.split("@")[0].substring(2).trim().replaceAll(" ", "+");
+    @Override
+    public void execute(String s, CommandContext commandContext) {
+        String userName = commandContext.getUpdate().getMessage().getFrom().getUserName();
+        if (userName.equals(getConfig().getString("admin"))) {
+            getDB().registerUser(Util.normalizeCmd(s), res -> {
+                sendReply(commandContext.getUpdate(), Boolean.toString(res.succeeded()));
+            });
+        }
     }
 }

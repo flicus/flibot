@@ -29,30 +29,30 @@ import org.schors.flibot.SearchType;
 import org.schors.flibot.SendMessageList;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
-public class GetAuthorCommand extends FlibotCommand {
+public class GetBookCommand extends FlibotCommand {
 
-    public GetAuthorCommand() {
-        super("^/author");
+    public GetBookCommand() {
+        super("^/book");
     }
 
     @Override
-    public void execute(String text, CommandContext context) {
-        String userName = context.getUpdate().getMessage().getFrom().getUserName();
+    public void execute(String s, CommandContext commandContext) {
+        String userName = commandContext.getUpdate().getMessage().getFrom().getUserName();
         Search search = getSearches().get(userName);
         if (search != null) {
             getSearches().remove(userName);
-            doGenericRequest("/opds" + String.format(authorSearch, search.getToSearch()), event -> {
+            doGenericRequest("/opds" + String.format(bookSearch, search.getToSearch()), event -> {
                 if (event.succeeded()) {
-                    sendReply(context.getUpdate(), (SendMessageList) event.result());
+                    sendReply(commandContext.getUpdate(), (SendMessageList) event.result());
                 } else {
-                    sendReply(context.getUpdate(), "Error happened :(");
+                    sendReply(commandContext.getUpdate(), "Error happened :(");
                 }
             });
         } else {
             search = new Search();
-            search.setSearchType(SearchType.AUTHOR);
+            search.setSearchType(SearchType.BOOK);
             getSearches().put(userName, search);
-            sendReply(context.getUpdate(), "Please enter the author name to search");
+            sendReply(commandContext.getUpdate(), "Please enter the book name to search");
         }
     }
 }

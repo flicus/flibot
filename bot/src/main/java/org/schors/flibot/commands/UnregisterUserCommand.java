@@ -1,8 +1,8 @@
 /*
- *
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016 schors
+ *  Copyright (c) 2016  schors
+ *
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -20,52 +20,26 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
- *
  */
 
-package org.schors.flibot;
+package org.schors.flibot.commands;
 
-import io.vertx.core.Handler;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.streams.ReadStream;
+import org.schors.flibot.Util;
+import org.schors.vertx.telegram.bot.commands.CommandContext;
 
-public abstract class ConversionStream implements ReadStream<Buffer> {
+public class UnregisterUserCommand extends FlibotCommand {
 
-    private ReadStream<Buffer> input;
-
-    public ConversionStream(ReadStream<Buffer> input) {
-        this.input = input;
+    public UnregisterUserCommand() {
+        super("^/u");
     }
 
     @Override
-    public ReadStream<Buffer> exceptionHandler(Handler<Throwable> handler) {
-        input.exceptionHandler(event -> handler.handle(event));
-        return this;
+    public void execute(String s, CommandContext commandContext) {
+        String userName = commandContext.getUpdate().getMessage().getFrom().getUserName();
+        if (userName.equals(getConfig().getString("admin"))) {
+            getDB().unregisterUser(Util.normalizeCmd(s), res -> {
+                sendReply(commandContext.getUpdate(), Boolean.toString(res.succeeded()));
+            });
+        }
     }
-
-    @Override
-    public ReadStream<Buffer> handler(Handler<Buffer> handler) {
-        input.handler(event -> handler.handle(converse(event)));
-        return this;
-    }
-
-    @Override
-    public ReadStream<Buffer> pause() {
-        input.pause();
-        return this;
-    }
-
-    @Override
-    public ReadStream<Buffer> resume() {
-        input.resume();
-        return this;
-    }
-
-    @Override
-    public ReadStream<Buffer> endHandler(Handler<Void> endHandler) {
-        input.endHandler(event -> endHandler.handle(event));
-        return this;
-    }
-
-    public abstract Buffer converse(Buffer input);
 }

@@ -1,8 +1,8 @@
 /*
- *
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016 schors
+ *  Copyright (c) 2016  schors
+ *
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -20,24 +20,33 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
- *
  */
 
 package org.schors.flibot.commands;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
+import org.schors.flibot.SendMessageList;
+import org.schors.vertx.telegram.bot.commands.CommandContext;
 
-public class GenericHandler implements Handler<Handler<AsyncResult<Object>>> {
+public class CatalogCommand extends FlibotCommand {
 
-    private String url;
-
-    public GenericHandler(String url) {
-        this.url = url;
+    public CatalogCommand() {
+        super("^/k");
     }
 
     @Override
-    public void handle(Handler<AsyncResult<Object>> event) {
+    public void execute(String s, CommandContext commandContext) {
+        catalog(event -> {
+            if (event.succeeded()) {
+                sendReply(commandContext.getUpdate(), (SendMessageList) event.result());
+            } else {
+                sendReply(commandContext.getUpdate(), "Error happened :(");
+            }
+        });
+    }
 
+    private void catalog(Handler<AsyncResult<Object>> handler) {
+        doGenericRequest("/opds", event -> handler.handle(event));
     }
 }
