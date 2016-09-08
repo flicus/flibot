@@ -23,13 +23,38 @@
  *
  */
 
-group 'schors'
+package org.schors.flibot;
 
-dependencies {
-    compile project(':db')
-    compile "io.vertx:vertx-service-proxy:3.3.2"
-    compile "io.vertx:vertx-codegen:3.3.2"
-    compile 'com.github.flicus:vertx-telegram-bot-api:v0.0.8'
-    compile 'org.jdom:jdom2:2.0.6'
-    compile 'com.google.guava:guava:19.0'
+import io.vertx.core.AsyncResult;
+
+public class Util {
+
+    public static final String HTTP_CLIENT = "httpClient";
+    public static final String CACHE = "cache";
+    public static final String SEARCHES = "searches";
+
+
+    public static AsyncResult createResult(boolean success, Object result, Throwable e) {
+        return new AsyncResult() {
+            @Override
+            public Object result() {
+                return result;
+            }
+
+            @Override
+            public Throwable cause() {
+                return e;
+            }
+
+            @Override
+            public boolean succeeded() {
+                return success;
+            }
+
+            @Override
+            public boolean failed() {
+                return !success;
+            }
+        };
+    }
 }

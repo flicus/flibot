@@ -37,11 +37,13 @@ import io.vertx.core.net.ProxyOptions;
 import io.vertx.core.net.ProxyType;
 import io.vertx.core.streams.Pump;
 import org.apache.log4j.Logger;
+import org.schors.flibot.commands.GetAuthorCommand;
 import org.schors.flibot.opds.Page;
 import org.schors.flibot.opds.PageParser;
-import org.schors.vertx.telegram.LongPollingReceiver;
-import org.schors.vertx.telegram.TelegramBot;
-import org.schors.vertx.telegram.TelegramOptions;
+import org.schors.vertx.telegram.bot.LongPollingReceiver;
+import org.schors.vertx.telegram.bot.TelegramBot;
+import org.schors.vertx.telegram.bot.TelegramOptions;
+import org.schors.vertx.telegram.bot.commands.CommandManager;
 import org.telegram.telegrambots.api.methods.ActionType;
 import org.telegram.telegrambots.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.api.methods.send.SendDocument;
@@ -76,9 +78,13 @@ public class FliBot extends AbstractVerticle {
     private Cache<String, String> urlCache;
     private Map<String, Search> searches = new ConcurrentHashMap<>();
     private String rootOPDS;
+    private CommandManager cm;
 
     @Override
     public void start() {
+
+        cm = new CommandManager()
+                .addCommand(new GetAuthorCommand());
 
         db = DBService.createProxy(vertx, "db-service");
         urlCache = CacheBuilder.newBuilder().maximumSize(1000).build();
@@ -108,32 +114,68 @@ public class FliBot extends AbstractVerticle {
                 .setBotName(config().getString("name"))
                 .setBotToken(config().getString("token"));
 
+        bot = TelegramBot.create(vertx, telegramOptions, cm)
+                .receiver(new LongPollingReceiver().onUpdate(update -> {
+                    if (update.hasMessage() && update.getMessage().hasText()) {
+                        sendBusy(update);
+                        String text = update.getMessage().getText();
+                        String userName = update.getMessage().getFrom().getUserName();
+                        log.warn("onUpdate: " + text + ", " + userName);
+                        db.isRegisterdUser(userName, registrationRes -> {
+                            if (registrationRes.succeeded() && registrationRes.result().getBoolean("res")) {
+                                cm.execute(text, cm.createContext(update));
+                            } else {
+                                sendReply(update, "I do not talk to strangers");
+                            }
+                        });
+                    }
+                }))
+                .addFacility(Util.HTTP_CLIENT, httpclient)
+                .addFacility(Util.CACHE, urlCache)
+                .addFacility(Util.SEARCHES, searches)
+                .start();
+
+        Handler<Handler<AsyncResult<Object>>> genericRequest = new Handler<Handler<AsyncResult<Object>>>() {
+            @Override
+            public void handle(Handler<AsyncResult<Object>> event) {
+
+            }
+        };
+
         bot = TelegramBot.create(vertx, telegramOptions)
                 .receiver(new LongPollingReceiver().onUpdate(update -> {
                     if (update.hasMessage() && update.getMessage().hasText()) {
                         sendBusy(update);
-                        String cmd = update.getMessage().getText();
+                        String text = update.getMessage().getText();
                         String userName = update.getMessage().getFrom().getUserName();
-                        log.warn("onUpdate: " + cmd + ", " + userName);
+                        log.warn("onUpdate: " + text + ", " + userName);
                         db.isRegisterdUser(userName, registrationRes -> {
                             if (registrationRes.succeeded() && registrationRes.result().getBoolean("res")) {
-                                if (cmd.startsWith("/author")) {
-                                    Search search = searches.get(userName);
-                                    if (search != null) {
-                                        searches.remove(userName);
-                                        getAuthor(search.getToSearch(), event -> {
-                                            if (event.succeeded()) {
-                                                sendReply(update, (SendMessageList) event.result());
-                                            } else {
-                                                sendReply(update, "Error happened :(");
-                                            }
-                                        });
-                                    } else {
-                                        search = new Search();
-                                        search.setSearchType(SearchType.AUTHOR);
-                                        searches.put(userName, search);
-                                        sendReply(update, "Please enter the author name to search");
-                                    }
+                                String cmd = text.split(" ")[0];
+                                switch (cmd) {
+                                    case "/author":
+                                        Search search = searches.get(userName);
+                                        if (search != null) {
+                                            searches.remove(userName);
+                                            getAuthor(search.getToSearch(), event -> {
+                                                if (event.succeeded()) {
+                                                    sendReply(update, (SendMessageList) event.result());
+                                                } else {
+                                                    sendReply(update, "Error happened :(");
+                                                }
+                                            });
+                                        } else {
+                                            search = new Search();
+                                            search.setSearchType(SearchType.AUTHOR);
+                                            searches.put(userName, search);
+                                            sendReply(update, "Please enter the author name to search");
+                                        }
+                                        break;
+                                    case
+                                }
+
+                                if (cmd.startsWith("")) {
+
                                 } else if (cmd.startsWith("/book")) {
                                     Search search = searches.get(userName);
                                     if (search != null) {
@@ -359,6 +401,7 @@ public class FliBot extends AbstractVerticle {
         doGenericRequest(rootOPDS + "/opds", event -> handler.handle(event));
     }
 
+
     private void doGenericRequest(String url, Handler<AsyncResult<Object>> handler) {
         SendMessageList result = new SendMessageList(4096);
         httpclient.get(url, event -> {
@@ -410,12 +453,12 @@ public class FliBot extends AbstractVerticle {
                             } else {
                                 result.append("Nothing found");
                             }
-                            handler.handle(createResult(true, result, null));
+                            handler.handle(Util.createResult(true, result, null));
                         })
                         .exceptionHandler(e -> {
-                            handler.handle(createResult(false, null, e));
+                            handler.handle(Util.createResult(false, null, e));
                         });
-            } else handler.handle(createResult(false, null, new BotException(event.statusMessage())));
+            } else handler.handle(Util.createResult(false, null, new BotException(event.statusMessage())));
         });
     }
 
@@ -455,30 +498,6 @@ public class FliBot extends AbstractVerticle {
         bot.sendChatAction(new SendChatAction()
                 .setChatId(update.getMessage().getChatId())
                 .setAction(ActionType.UPLOADDOCUMENT));
-    }
-
-    private AsyncResult createResult(boolean success, Object result, Throwable e) {
-        return new AsyncResult() {
-            @Override
-            public Object result() {
-                return result;
-            }
-
-            @Override
-            public Throwable cause() {
-                return e;
-            }
-
-            @Override
-            public boolean succeeded() {
-                return success;
-            }
-
-            @Override
-            public boolean failed() {
-                return !success;
-            }
-        };
     }
 
 }

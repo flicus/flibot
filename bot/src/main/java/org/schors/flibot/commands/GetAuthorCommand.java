@@ -23,13 +23,26 @@
  *
  */
 
-group 'schors'
+package org.schors.flibot.commands;
 
-dependencies {
-    compile project(':db')
-    compile "io.vertx:vertx-service-proxy:3.3.2"
-    compile "io.vertx:vertx-codegen:3.3.2"
-    compile 'com.github.flicus:vertx-telegram-bot-api:v0.0.8'
-    compile 'org.jdom:jdom2:2.0.6'
-    compile 'com.google.guava:guava:19.0'
+
+import io.vertx.core.http.HttpClient;
+import org.schors.flibot.Util;
+import org.schors.vertx.telegram.bot.commands.Command;
+import org.schors.vertx.telegram.bot.commands.CommandContext;
+
+public class GetAuthorCommand extends Command {
+
+    public GetAuthorCommand() {
+        super("^/author");
+    }
+
+    @Override
+    public void execute(String text, CommandContext context) {
+
+        HttpClient client = (HttpClient) getBot().getFacility(Util.HTTP_CLIENT);
+        HttpClient client = (HttpClient) getBot().getFacility(Util.HTTP_CLIENT);
+
+
+    }
 }
