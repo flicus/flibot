@@ -67,7 +67,7 @@ public class DownloadZipCommand extends FlibotCommand {
                         if (event.succeeded()) {
                             Pump.pump(zipStream
                                             .endHandler(done -> handler.handle(Util.createResult(true, new SendDocument().setNewDocument(book).setCaption("book"), null)))
-                                            .exceptionHandler(e -> handler.handle(Util.createResult(false, null, e))),
+                                            .exceptionHandler(e -> handler.handle(Util.createResult(false, null, (Throwable) e))),
                                     event.result())
                                     .start();
                         } else {
