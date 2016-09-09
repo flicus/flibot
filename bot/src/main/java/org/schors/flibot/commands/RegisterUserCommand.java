@@ -34,11 +34,11 @@ public class RegisterUserCommand extends FlibotCommand {
     }
 
     @Override
-    public void execute(String s, CommandContext commandContext) {
-        String userName = commandContext.getUpdate().getMessage().getFrom().getUserName();
+    public void execute(String text, CommandContext context) {
+        String userName = context.getUpdate().getMessage().getFrom().getUserName();
         if (userName.equals(getConfig().getString("admin"))) {
-            getDB().registerUser(Util.normalizeCmd(s), res -> {
-                sendReply(commandContext.getUpdate(), Boolean.toString(res.succeeded()));
+            getDB().registerUser(Util.normalizeCmd(text), res -> {
+                sendReply(context, Boolean.toString(res.succeeded()));
             });
         }
     }

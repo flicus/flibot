@@ -34,11 +34,11 @@ public class UnregisterUserCommand extends FlibotCommand {
     }
 
     @Override
-    public void execute(String s, CommandContext commandContext) {
-        String userName = commandContext.getUpdate().getMessage().getFrom().getUserName();
+    public void execute(String text, CommandContext context) {
+        String userName = context.getUpdate().getMessage().getFrom().getUserName();
         if (userName.equals(getConfig().getString("admin"))) {
-            getDB().unregisterUser(Util.normalizeCmd(s), res -> {
-                sendReply(commandContext.getUpdate(), Boolean.toString(res.succeeded()));
+            getDB().unregisterUser(Util.normalizeCmd(text), res -> {
+                sendReply(context, Boolean.toString(res.succeeded()));
             });
         }
     }

@@ -42,18 +42,18 @@ public class DownloadZipCommand extends FlibotCommand {
     }
 
     @Override
-    public void execute(String s, CommandContext commandContext) {
-        String url = getCache().getIfPresent(Util.normalizeCmd(s));
+    public void execute(String text, CommandContext context) {
+        String url = getCache().getIfPresent(Util.normalizeCmd(text));
         if (url != null) {
             downloadz(url, event -> {
                 if (event.succeeded()) {
-                    sendFile(commandContext.getUpdate(), (SendDocument) event.result());
+                    sendFile(context, (SendDocument) event.result());
                 } else {
-                    sendReply(commandContext.getUpdate(), "Error happened :(");
+                    sendReply(context, "Error happened :(");
                 }
             });
         } else {
-            sendReply(commandContext.getUpdate(), "Expired command");
+            sendReply(context, "Expired command");
         }
     }
 

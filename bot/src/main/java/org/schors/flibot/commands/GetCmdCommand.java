@@ -35,18 +35,18 @@ public class GetCmdCommand extends FlibotCommand {
     }
 
     @Override
-    public void execute(String s, CommandContext commandContext) {
-        String url = getCache().getIfPresent(Util.normalizeCmd(s));
+    public void execute(String text, CommandContext context) {
+        String url = getCache().getIfPresent(Util.normalizeCmd(text));
         if (url != null) {
             doGenericRequest(url, event -> {
                 if (event.succeeded()) {
-                    sendReply(commandContext.getUpdate(), (SendMessageList) event.result());
+                    sendReply(context, (SendMessageList) event.result());
                 } else {
-                    sendReply(commandContext.getUpdate(), "Error happened :(");
+                    sendReply(context, "Error happened :(");
                 }
             });
         } else {
-            sendReply(commandContext.getUpdate(), "Expired command");
+            sendReply(context, "Expired command");
         }
     }
 }

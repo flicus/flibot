@@ -33,10 +33,10 @@ import org.schors.flibot.*;
 import org.schors.flibot.opds.Page;
 import org.schors.flibot.opds.PageParser;
 import org.schors.vertx.telegram.bot.commands.Command;
+import org.schors.vertx.telegram.bot.commands.CommandContext;
 import org.telegram.telegrambots.api.methods.send.SendDocument;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
-import org.telegram.telegrambots.api.objects.Update;
 
 import java.util.Map;
 
@@ -69,30 +69,30 @@ public abstract class FlibotCommand extends Command {
         return (JsonObject) getBot().getFacility(Util.CONFIG);
     }
 
-    protected void sendReply(Update update, String res) {
+    protected void sendReply(CommandContext context, String res) {
         getBot().sendMessage(new SendMessage()
-                .setChatId(update.getMessage().getChatId())
+                .setChatId(context.getUpdate().getMessage().getChatId())
                 .setText(res)
                 .enableHtml(true));
     }
 
-    protected void sendReply(Update update, SendMessage res) {
-        res.setChatId(update.getMessage().getChatId());
+    protected void sendReply(CommandContext context, SendMessage res) {
+        res.setChatId(context.getUpdate().getMessage().getChatId());
         getBot().sendMessage(res);
     }
 
-    protected Message sendReply(Update update, SendMessageList res) {
+    protected Message sendReply(CommandContext context, SendMessageList res) {
         Message result = null;
         for (SendMessage sm : res.getMessages()) {
-            sm.setChatId(update.getMessage().getChatId());
+            sm.setChatId(context.getUpdate().getMessage().getChatId());
             getBot().sendMessage(sm);
         }
         return result;
     }
 
-    protected Message sendFile(Update update, SendDocument res) {
+    protected Message sendFile(CommandContext context, SendDocument res) {
         Message result = null;
-        res.setChatId(update.getMessage().getChatId());
+        res.setChatId(context.getUpdate().getMessage().getChatId());
         getBot().sendDocument(res);
         return result;
     }

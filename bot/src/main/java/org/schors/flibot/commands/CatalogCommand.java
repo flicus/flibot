@@ -36,12 +36,12 @@ public class CatalogCommand extends FlibotCommand {
     }
 
     @Override
-    public void execute(String s, CommandContext commandContext) {
+    public void execute(String text, CommandContext context) {
         catalog(event -> {
             if (event.succeeded()) {
-                sendReply(commandContext.getUpdate(), (SendMessageList) event.result());
+                sendReply(context, (SendMessageList) event.result());
             } else {
-                sendReply(commandContext.getUpdate(), "Error happened :(");
+                sendReply(context, "Error happened :(");
             }
         });
     }

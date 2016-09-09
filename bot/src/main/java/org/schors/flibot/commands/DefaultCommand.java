@@ -44,28 +44,28 @@ public class DefaultCommand extends FlibotCommand {
     }
 
     @Override
-    public void execute(String s, CommandContext commandContext) {
-        String userName = commandContext.getUpdate().getMessage().getFrom().getUserName();
+    public void execute(String text, CommandContext context) {
+        String userName = context.getUpdate().getMessage().getFrom().getUserName();
         Search search = getSearches().get(userName);
         if (search != null) {
             getSearches().remove(userName);
             switch (search.getSearchType()) {
                 case AUTHOR: {
-                    getAuthor(s.trim().replaceAll(" ", "+"), event -> {
+                    getAuthor(text.trim().replaceAll(" ", "+"), event -> {
                         if (event.succeeded()) {
-                            sendReply(commandContext.getUpdate(), (SendMessageList) event.result());
+                            sendReply(context, (SendMessageList) event.result());
                         } else {
-                            sendReply(commandContext.getUpdate(), "Error happened :(");
+                            sendReply(context, "Error happened :(");
                         }
                     });
                     break;
                 }
                 case BOOK: {
-                    getBook(s.trim().replaceAll(" ", "+"), event -> {
+                    getBook(text.trim().replaceAll(" ", "+"), event -> {
                         if (event.succeeded()) {
-                            sendReply(commandContext.getUpdate(), (SendMessageList) event.result());
+                            sendReply(context, (SendMessageList) event.result());
                         } else {
-                            sendReply(commandContext.getUpdate(), "Error happened :(");
+                            sendReply(context, "Error happened :(");
                         }
                     });
                     break;
@@ -73,7 +73,7 @@ public class DefaultCommand extends FlibotCommand {
             }
         } else {
             search = new Search();
-            search.setToSearch(s.trim().replaceAll(" ", "+"));
+            search.setToSearch(text.trim().replaceAll(" ", "+"));
             getSearches().put(userName, search);
             KeyboardButton authorButton = new KeyboardButton();
             authorButton.setText("/author");
@@ -89,10 +89,10 @@ public class DefaultCommand extends FlibotCommand {
             keyboardMarkup.setResizeKeyboard(true);
             keyboardMarkup.setSelective(true);
             SendMessage sendMessage = new SendMessage();
-            sendMessage.setChatId(commandContext.getUpdate().getMessage().getChatId());
+            sendMessage.setChatId(context.getUpdate().getMessage().getChatId());
             sendMessage.setReplyMarkup(keyboardMarkup);
             sendMessage.setText("What to search, author or book?");
-            sendReply(commandContext.getUpdate(), sendMessage);
+            sendReply(context, sendMessage);
         }
     }
 

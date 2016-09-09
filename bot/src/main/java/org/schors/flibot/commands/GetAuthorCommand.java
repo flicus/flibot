@@ -43,16 +43,16 @@ public class GetAuthorCommand extends FlibotCommand {
             getSearches().remove(userName);
             doGenericRequest("/opds" + String.format(authorSearch, search.getToSearch()), event -> {
                 if (event.succeeded()) {
-                    sendReply(context.getUpdate(), (SendMessageList) event.result());
+                    sendReply(context, (SendMessageList) event.result());
                 } else {
-                    sendReply(context.getUpdate(), "Error happened :(");
+                    sendReply(context, "Error happened :(");
                 }
             });
         } else {
             search = new Search();
             search.setSearchType(SearchType.AUTHOR);
             getSearches().put(userName, search);
-            sendReply(context.getUpdate(), "Please enter the author name to search");
+            sendReply(context, "Please enter the author name to search");
         }
     }
 }

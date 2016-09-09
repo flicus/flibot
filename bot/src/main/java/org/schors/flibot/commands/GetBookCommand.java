@@ -36,23 +36,23 @@ public class GetBookCommand extends FlibotCommand {
     }
 
     @Override
-    public void execute(String s, CommandContext commandContext) {
-        String userName = commandContext.getUpdate().getMessage().getFrom().getUserName();
+    public void execute(String text, CommandContext context) {
+        String userName = context.getUpdate().getMessage().getFrom().getUserName();
         Search search = getSearches().get(userName);
         if (search != null) {
             getSearches().remove(userName);
             doGenericRequest("/opds" + String.format(bookSearch, search.getToSearch()), event -> {
                 if (event.succeeded()) {
-                    sendReply(commandContext.getUpdate(), (SendMessageList) event.result());
+                    sendReply(context, (SendMessageList) event.result());
                 } else {
-                    sendReply(commandContext.getUpdate(), "Error happened :(");
+                    sendReply(context, "Error happened :(");
                 }
             });
         } else {
             search = new Search();
             search.setSearchType(SearchType.BOOK);
             getSearches().put(userName, search);
-            sendReply(commandContext.getUpdate(), "Please enter the book name to search");
+            sendReply(context, "Please enter the book name to search");
         }
     }
 }
