@@ -78,6 +78,8 @@ public class DownloadZipCommand extends FlibotCommand {
                     handler.handle(Util.createResult(false, null, e));
                 }
             }
-        }).exceptionHandler(e -> handler.handle(Util.createResult(false, null, e)));
+        }).exceptionHandler(e -> {
+            handler.handle(Util.createResult(false, null, e));
+        });
     }
 }
