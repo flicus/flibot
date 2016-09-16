@@ -82,7 +82,7 @@ public class DefaultCommand extends FlibotCommand {
             KeyboardRow keyboardRow = new KeyboardRow();
             keyboardRow.add(authorButton);
             keyboardRow.add(bookButton);
-            List<KeyboardRow> keyboardRows = new ArrayList<KeyboardRow>();
+            List<KeyboardRow> keyboardRows = new ArrayList<>();
             keyboardRows.add(keyboardRow);
             ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
             keyboardMarkup.setKeyboard(keyboardRows);
