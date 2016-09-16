@@ -39,7 +39,7 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        String log4j = "log4j.properties";
+        String log4j = "etc/log4j.properties";
         if (args.length > 1) log4j = args[1];
         PropertyConfigurator.configure(log4j);
 
