@@ -22,37 +22,43 @@
  *  SOFTWARE.
  */
 
-package org.schors.flibot.commands;
+package org.schors.flibot;
 
-import org.schors.flibot.Search;
-import org.schors.flibot.SearchType;
-import org.schors.flibot.SendMessageList;
-import org.schors.vertx.telegram.bot.commands.CommandContext;
+import java.util.ArrayList;
+import java.util.List;
 
-public class GetBookCommand extends FlibotCommand {
+/**
+ * Created by flicus on 19.06.16.
+ */
+public class Page {
+    private String title = null;
+    private List<Link> links = new ArrayList<>();
+    private List<Entry> entries = new ArrayList<>();
 
-    public GetBookCommand() {
-        super("^/book");
+    public Page() {
     }
 
-    @Override
-    public void execute(String text, CommandContext context) {
-        String userName = context.getUpdate().getMessage().getFrom().getUserName();
-        Search search = getSearches().get(userName);
-        if (search != null) {
-            getSearches().remove(userName);
-            doGenericRequest("/opds" + String.format(bookSearch, search.getToSearch()), event -> {
-                if (event.succeeded()) {
-                    sendReply(context, (SendMessageList) event.result());
-                } else {
-                    sendReply(context, "Error happened :(");
-                }
-            });
-        } else {
-            search = new Search();
-            search.setSearchType(SearchType.BOOK);
-            getSearches().put(userName, search);
-            sendReply(context, "Please enter the book name to search");
-        }
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<Link> links) {
+        this.links = links;
+    }
+
+    public List<Entry> getEntries() {
+        return entries;
+    }
+
+    public void setEntries(List<Entry> entries) {
+        this.entries = entries;
     }
 }

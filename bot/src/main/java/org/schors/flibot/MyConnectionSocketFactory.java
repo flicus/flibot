@@ -22,37 +22,34 @@
  *  SOFTWARE.
  */
 
-package org.schors.flibot.commands;
+package org.schors.flibot;
 
-import org.schors.flibot.Search;
-import org.schors.flibot.SearchType;
-import org.schors.flibot.SendMessageList;
-import org.schors.vertx.telegram.bot.commands.CommandContext;
+import org.apache.http.HttpHost;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.protocol.HttpContext;
 
-public class GetAuthorCommand extends FlibotCommand {
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Socket;
 
-    public GetAuthorCommand() {
-        super("^/author");
+/**
+ * Created by flicus on 01.05.16.
+ */
+public class MyConnectionSocketFactory extends PlainConnectionSocketFactory {
+
+    @Override
+    public Socket createSocket(HttpContext context) throws IOException {
+        InetSocketAddress socksaddr = (InetSocketAddress) context.getAttribute("socks.address");
+        Proxy proxy = new Proxy(Proxy.Type.SOCKS, socksaddr);
+        return new Socket(proxy);
     }
 
     @Override
-    public void execute(String text, CommandContext context) {
-        String userName = context.getUpdate().getMessage().getFrom().getUserName();
-        Search search = getSearches().get(userName);
-        if (search != null) {
-            getSearches().remove(userName);
-            doGenericRequest("/opds" + String.format(authorSearch, search.getToSearch()), event -> {
-                if (event.succeeded()) {
-                    sendReply(context, (SendMessageList) event.result());
-                } else {
-                    sendReply(context, "Error happened :(");
-                }
-            });
-        } else {
-            search = new Search();
-            search.setSearchType(SearchType.AUTHOR);
-            getSearches().put(userName, search);
-            sendReply(context, "Please enter the author name to search");
-        }
+    public Socket connectSocket(int connectTimeout, Socket socket, HttpHost host, InetSocketAddress remoteAddress, InetSocketAddress localAddress, HttpContext context) throws IOException {
+        // Convert address to unresolved
+        InetSocketAddress unresolvedRemote = InetSocketAddress
+                .createUnresolved(host.getHostName(), remoteAddress.getPort());
+        return super.connectSocket(connectTimeout, socket, host, unresolvedRemote, localAddress, context);
     }
 }

@@ -1,8 +1,8 @@
 /*
- *
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016 schors
+ *  Copyright (c) 2016  schors
+ *
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -20,44 +20,47 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
- *
  */
 
-package org.schors.flibot.opds;
+package org.schors.flibot;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by flicus on 14.05.16.
  */
-public class Link {
-    private String href;
-    private String type;
+public class Entry {
+    private String updated;
+    private String id;
     private String title;
-    private String rel;
+    private String author;
+    private List<Link> links = new ArrayList<>();
 
-    public Link(String href, String type, String title, String rel) {
-        this.href = href;
-        this.type = type;
+    public Entry(String updated, String id, String title, String author) {
+        this.updated = updated;
+        this.id = id;
         this.title = title;
-        this.rel = rel;
+        this.author = author;
     }
 
-    public Link() {
+    public Entry() {
     }
 
-    public String getHref() {
-        return href;
+    public String getUpdated() {
+        return updated;
     }
 
-    public void setHref(String href) {
-        this.href = href;
+    public void setUpdated(String updated) {
+        this.updated = updated;
     }
 
-    public String getType() {
-        return type;
+    public String getId() {
+        return id;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getTitle() {
@@ -68,22 +71,26 @@ public class Link {
         this.title = title;
     }
 
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
     @Override
     public String toString() {
-        return "Link{" +
-                "href='" + href + '\'' +
-                ", type='" + type + '\'' +
+        return "Entry{" +
+                "updated='" + updated + '\'' +
+                ", id='" + id + '\'' +
                 ", title='" + title + '\'' +
-                ", rel='" + rel + '\'' +
+                ", author='" + author + '\'' +
+                ", links=" + links +
                 '}';
     }
-
-    public String getRel() {
-        return rel;
-    }
-
-    public void setRel(String rel) {
-        this.rel = rel;
-    }
-
 }

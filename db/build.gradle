@@ -1,8 +1,8 @@
 /*
- *
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016 schors
+ *  Copyright (c) 2016  schors
+ *
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -20,7 +20,6 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
- *
  */
 
 group 'schors'
@@ -36,8 +35,9 @@ sourceSets {
 }
 
 dependencies {
-    compile "io.vertx:vertx-service-proxy:3.3.2"
-    compile "io.vertx:vertx-codegen:3.3.2"
+    compile "io.vertx:vertx-service-proxy:3.2.1"
+    compile "io.vertx:vertx-codegen:3.2.1"
+    compile "org.json:json:20151123"
     compile 'com.h2database:h2:1.4.192'
 }
 

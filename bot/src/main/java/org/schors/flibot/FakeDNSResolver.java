@@ -22,31 +22,20 @@
  *  SOFTWARE.
  */
 
-package org.schors.flibot.commands;
+package org.schors.flibot;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
-import org.schors.flibot.SendMessageList;
-import org.schors.vertx.telegram.bot.commands.CommandContext;
+import org.apache.http.conn.DnsResolver;
 
-public class CatalogCommand extends FlibotCommand {
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
-    public CatalogCommand() {
-        super("^/k");
-    }
-
+/**
+ * Created by flicus on 01.05.16.
+ */
+public class FakeDNSResolver implements DnsResolver {
     @Override
-    public void execute(String text, CommandContext context) {
-        catalog(event -> {
-            if (event.succeeded()) {
-                sendReply(context, (SendMessageList) event.result());
-            } else {
-                sendReply(context, "Error happened :(");
-            }
-        });
-    }
-
-    private void catalog(Handler<AsyncResult<Object>> handler) {
-        doGenericRequest("/opds", event -> handler.handle(event));
+    public InetAddress[] resolve(String host) throws UnknownHostException {
+        // Return some fake DNS record for every request, we won't be using it
+        return new InetAddress[]{InetAddress.getByAddress(new byte[]{1, 1, 1, 1})};
     }
 }
