@@ -1,8 +1,7 @@
 /*
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016  schors
- *
+ *  Copyright (c) 2016 schors
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -61,8 +60,8 @@ public abstract class FlibotCommand extends Command {
         return (Map<String, Search>) getBot().getFacility(Util.SEARCHES);
     }
 
-    protected DBService getDB() {
-        return (DBService) getBot().getFacility(Util.DB);
+    protected Storage getDB() {
+        return (Storage) getBot().getFacility(Util.DB);
     }
 
     protected JsonObject getConfig() {

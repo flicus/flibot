@@ -1,5 +1,4 @@
 /*
- *
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 schors
@@ -20,7 +19,6 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
- *
  */
 
 if (!JavaVersion.current().java8Compatible) {
@@ -75,6 +73,6 @@ subprojects {
 
     dependencies {
         compile "log4j:log4j:1.2.17"
-        compile "io.vertx:vertx-core:3.3.2"
+        compile "io.vertx:vertx-core:3.3.3"
     }
 }

@@ -24,5 +24,4 @@
 rootProject.name = 'flibot'
 include 'starter'
 include 'bot'
-include 'db'
 

@@ -1,8 +1,7 @@
 /*
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016  schors
- *
+ *  Copyright (c) 2016 schors
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -57,7 +56,7 @@ public class FliBot extends AbstractVerticle {
 
     private TelegramBot bot;
     private HttpClient httpclient;
-    private DBService db;
+    private Storage db;
     private Cache<String, String> urlCache;
     private Map<String, Search> searches = new ConcurrentHashMap<>();
     private CommandManager cm;
@@ -76,7 +75,7 @@ public class FliBot extends AbstractVerticle {
                 .addCommand(new GetCmdCommand())
                 .setDefaultCommand(new DefaultCommand());
 
-        db = DBService.createProxy(vertx, "db-service");
+        db = new Storage(vertx, config().getString("admin"));
         urlCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
         boolean usetor = config().getBoolean("usetor");
@@ -109,7 +108,7 @@ public class FliBot extends AbstractVerticle {
                         String text = update.getMessage().getText();
                         String userName = update.getMessage().getFrom().getUserName();
                         log.warn("onUpdate: " + text + ", " + userName);
-                        db.isRegisterdUser(userName, registrationRes -> {
+                        db.isRegisteredUser(userName, registrationRes -> {
                             if (registrationRes.succeeded() && registrationRes.result().getBoolean("res")) {
                                 cm.execute(text, cm.createContext(update));
                             } else {

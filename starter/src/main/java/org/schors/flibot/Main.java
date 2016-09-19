@@ -1,5 +1,4 @@
 /*
- *
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 schors
@@ -20,7 +19,6 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
- *
  */
 
 package org.schors.flibot;
@@ -68,13 +66,6 @@ public class Main {
         Vertx vertx = Vertx.vertx(options);
 
         DeploymentOptions deploymentOptions = new DeploymentOptions().setInstances(1).setConfig(config);
-        vertx.deployVerticle(new DBManager(), deploymentOptions, event -> {
-            if (event.succeeded()) {
-                vertx.deployVerticle(new FliBot(), deploymentOptions);
-            } else {
-                event.cause().printStackTrace();
-                vertx.close();
-            }
-        });
+        vertx.deployVerticle(new FliBot(), deploymentOptions);
     }
 }

@@ -1,8 +1,7 @@
 /*
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016  schors
- *
+ *  Copyright (c) 2016 schors
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -25,9 +24,7 @@
 group 'schors'
 
 dependencies {
-    compile project(':db')
-    compile "io.vertx:vertx-service-proxy:3.3.2"
-    compile "io.vertx:vertx-codegen:3.3.2"
+    compile 'io.vertx:vertx-jdbc-client:3.3.3'
     compile 'com.github.flicus:vertx-telegram-bot-api:v0.0.9'
     compile 'org.jdom:jdom2:2.0.6'
     compile 'com.google.guava:guava:19.0'
