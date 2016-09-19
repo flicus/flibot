@@ -1,8 +1,7 @@
 /*
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016  schors
- *
+ *  Copyright (c) 2016 schors
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -67,13 +66,6 @@ public class Main {
         Vertx vertx = Vertx.vertx(options);
 
         DeploymentOptions deploymentOptions = new DeploymentOptions().setInstances(1).setConfig(config);
-        vertx.deployVerticle(new DBManager(), deploymentOptions, event -> {
-            if (event.succeeded()) {
-                vertx.deployVerticle(new FliBot(), deploymentOptions);
-            } else {
-                event.cause().printStackTrace();
-                vertx.close();
-            }
-        });
+        vertx.deployVerticle(new FliBot(), deploymentOptions);
     }
 }
