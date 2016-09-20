@@ -1,7 +1,8 @@
 /*
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016 schors
+ *  Copyright (c) 2016  schors
+ *
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -23,107 +24,82 @@
 
 package org.schors.flibot;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.JDBCClient;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Storage {
 
-    private JDBCClient client;
+    private Vertx vertx;
+    private Set<String> users = new HashSet<>();
 
     public Storage(Vertx vertx, String admin) {
-        JsonObject config = new JsonObject()
-                .put("url", "jdbc:h2:./flibot")
-                .put("driver_class", "org.h2.Driver")
-                .put("user", "sa")
-                .put("password", "");
-
-        client = JDBCClient.createShared(vertx, config);
-        isRegisteredUser(admin, event -> {
-            if (event.failed()) {
-                createTables(admin);
+        this.vertx = vertx;
+        load(event -> {
+            if (!users.contains(admin)) {
+                users.clear();
+                users.add(admin);
+                save();
             }
         });
     }
 
-    public static AsyncResult<JsonObject> makeAsyncResult(final JsonObject result, final Throwable cause, final boolean success) {
-        return new AsyncResult<JsonObject>() {
-            @Override
-            public JsonObject result() {
-                return result;
-            }
-
-            @Override
-            public Throwable cause() {
-                return cause;
-            }
-
-            @Override
-            public boolean succeeded() {
-                return success;
-            }
-
-            @Override
-            public boolean failed() {
-                return !success;
-            }
-        };
+    public boolean isRegisteredUser(String userName) {
+        return users.contains(userName);
     }
 
-    public void isRegisteredUser(String userName, Handler<AsyncResult<JsonObject>> handler) {
-        client.getConnection(event -> {
-            if (event.succeeded()) {
-                event.result().queryWithParams("select 1 from registered where name=?", new JsonArray().add(userName), res -> {
-                    if (res.succeeded() && res.result().getNumRows() > 0) {
-                        handler.handle(makeAsyncResult(null, res.cause(), res.succeeded()));
-                    } else {
-                        handler.handle(makeAsyncResult(null, null, false));
-                    }
-                });
-            } else handler.handle(makeAsyncResult(null, null, false));
+    public void registerUser(String userName) {
+        if (!users.contains(userName)) {
+            users.add(userName);
+            save();
+        }
+    }
+
+    public void unregisterUser(String userName) {
+        if (users.contains(userName)) {
+            users.remove(userName);
+            save();
+        }
+    }
+
+    private void load(Handler handler) {
+        vertx.executeBlocking(future -> {
+            try {
+                BufferedReader r = new BufferedReader(new FileReader("flibot.dat"));
+                while (r.ready()) {
+                    users.add(r.readLine());
+                }
+                r.close();
+                future.complete();
+            } catch (Exception e) {
+                future.fail(e);
+            }
+        }, res -> {
+            handler.handle(null);
         });
     }
 
-    public void registerUser(String userName, Handler<AsyncResult<JsonObject>> handler) {
-        client.getConnection(event -> {
-            if (event.succeeded()) {
-                event.result().updateWithParams("insert into registered values(?)", new JsonArray().add(userName), res -> {
-                    handler.handle(makeAsyncResult(null, res.cause(), res.succeeded()));
-                });
-            } else handler.handle(makeAsyncResult(null, null, false));
-        });
-    }
-
-    public void unregisterUser(String userName, Handler<AsyncResult<JsonObject>> handler) {
-        client.getConnection(event -> {
-            if (event.succeeded()) {
-                event.result().updateWithParams("delete from registered where name=?", new JsonArray().add(userName), res -> {
-                    handler.handle(makeAsyncResult(null, res.cause(), res.succeeded()));
-                });
-            } else handler.handle(makeAsyncResult(null, null, false));
-        });
-    }
-
-    private void createTables(String admin) {
-        client.getConnection(event -> {
-            if (event.succeeded()) {
-                List<String> batch = new ArrayList<>();
-                batch.add("drop table if EXISTS registered");
-                batch.add("CREATE TABLE registered (name VARCHAR(255))");
-                event.result().batch(batch, res -> {
-                    if (res.succeeded()) {
-                        event.result().updateWithParams("insert into registered values(?)", new JsonArray().add(admin), event1 -> {
-                            //do nothing, maybe check updated rows
-                        });
-                    }
-                });
+    private void save() {
+        vertx.executeBlocking(future -> {
+            try {
+                BufferedWriter w = new BufferedWriter(new FileWriter("flibot.dat"));
+                for (String s : users) {
+                    w.write(s);
+                    w.newLine();
+                }
+                w.flush();
+                w.close();
+            } catch (Exception e) {
+                future.fail(e);
             }
+        }, res -> {
+            //do nothing
         });
     }
 }

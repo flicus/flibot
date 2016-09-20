@@ -1,7 +1,8 @@
 /*
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016 schors
+ *  Copyright (c) 2016  schors
+ *
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -25,10 +26,9 @@ group 'schors'
 
 dependencies {
     compile "org.json:json:20151123"
-    compile 'io.vertx:vertx-jdbc-client:3.3.3'
     compile "org.apache.httpcomponents:httpclient:4.5.1"
     compile "org.apache.httpcomponents:httpmime:4.5.1"
-    compile 'com.github.rubenlagus:TelegramBots:v2.3.3.2'
+    compile 'com.github.rubenlagus:TelegramBots:v2.3.5'
     compile 'org.jdom:jdom2:2.0.6'
     compile 'com.google.guava:guava:19.0'
 }

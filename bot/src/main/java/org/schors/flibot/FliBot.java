@@ -1,7 +1,8 @@
 /*
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016 schors
+ *  Copyright (c) 2016  schors
+ *
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -195,147 +196,141 @@ public class FliBot extends AbstractVerticle {
                         String cmd = update.getMessage().getText();
                         String userName = update.getMessage().getFrom().getUserName();
                         log.warn("onUpdate: " + cmd + ", " + userName);
-                        db.isRegisteredUser(userName, registrationRes -> {
-                            if (registrationRes.succeeded() && registrationRes.result().getBoolean("res")) {
-                                if (cmd.startsWith("/author")) {
-                                    Search search = searches.get(userName);
-                                    if (search != null) {
-                                        searches.remove(userName);
-                                        getAuthor(search.getToSearch(), event -> {
-                                            if (event.succeeded()) {
-                                                sendReply(update, (SendMessageList) event.result());
-                                            } else {
-                                                sendReply(update, "Error happened :(");
-                                            }
-                                        });
-                                    } else {
-                                        search = new Search();
-                                        search.setSearchType(SearchType.AUTHOR);
-                                        searches.put(userName, search);
-                                        sendReply(update, "Please enter the author name to search");
-                                    }
-                                } else if (cmd.startsWith("/book")) {
-                                    Search search = searches.get(userName);
-                                    if (search != null) {
-                                        searches.remove(userName);
-                                        getBook(search.getToSearch(), event -> {
-                                            if (event.succeeded()) {
-                                                sendReply(update, (SendMessageList) event.result());
-                                            } else {
-                                                sendReply(update, "Error happened :(");
-                                            }
-                                        });
-                                    } else {
-                                        search = new Search();
-                                        search.setSearchType(SearchType.BOOK);
-                                        searches.put(userName, search);
-                                        sendReply(update, "Please enter the book name to search");
-                                    }
-                                } else if (cmd.startsWith("/c")) {
-                                    String url = urlCache.getIfPresent(normalizeCmd(cmd));
-                                    if (url != null) {
-                                        getCmd(url, event -> {
-                                            if (event.succeeded()) sendReply(update, (SendMessageList) event.result());
-                                        });
-                                    } else {
-                                        sendReply(update, "Expired command");
-                                    }
-                                } else if (cmd.startsWith("/d")) {
-                                    String url = urlCache.getIfPresent(normalizeCmd(cmd));
-                                    if (url != null) {
-                                        download(url, event -> {
-                                            if (event.succeeded()) {
-                                                sendFile(update, (SendDocument) event.result());
-                                            } else {
-                                                sendReply(update, "Error happened :(");
-                                            }
-                                        });
-                                    } else {
-                                        sendReply(update, "Expired command");
-                                    }
-                                } else if (cmd.startsWith("/z")) {
-                                    String url = urlCache.getIfPresent(normalizeCmd(cmd));
-                                    if (url != null) {
-                                        downloadz(url, event -> {
-                                            if (event.succeeded()) {
-                                                sendFile(update, (SendDocument) event.result());
-                                            } else {
-                                                sendReply(update, "Error happened :(");
-                                            }
-                                        });
-                                    } else {
-                                        sendReply(update, "Expired command");
-                                    }
-                                } else if (cmd.startsWith("/k")) {
-                                    catalog(event -> {
+                        if (db.isRegisteredUser(userName)) {
+                            if (cmd.startsWith("/author")) {
+                                Search search = searches.get(userName);
+                                if (search != null) {
+                                    searches.remove(userName);
+                                    getAuthor(search.getToSearch(), event -> {
+                                        if (event.succeeded()) {
+                                            sendReply(update, (SendMessageList) event.result());
+                                        } else {
+                                            sendReply(update, "Error happened :(");
+                                        }
+                                    });
+                                } else {
+                                    search = new Search();
+                                    search.setSearchType(SearchType.AUTHOR);
+                                    searches.put(userName, search);
+                                    sendReply(update, "Please enter the author name to search");
+                                }
+                            } else if (cmd.startsWith("/book")) {
+                                Search search = searches.get(userName);
+                                if (search != null) {
+                                    searches.remove(userName);
+                                    getBook(search.getToSearch(), event -> {
+                                        if (event.succeeded()) {
+                                            sendReply(update, (SendMessageList) event.result());
+                                        } else {
+                                            sendReply(update, "Error happened :(");
+                                        }
+                                    });
+                                } else {
+                                    search = new Search();
+                                    search.setSearchType(SearchType.BOOK);
+                                    searches.put(userName, search);
+                                    sendReply(update, "Please enter the book name to search");
+                                }
+                            } else if (cmd.startsWith("/c")) {
+                                String url = urlCache.getIfPresent(normalizeCmd(cmd));
+                                if (url != null) {
+                                    getCmd(url, event -> {
                                         if (event.succeeded()) sendReply(update, (SendMessageList) event.result());
                                     });
-                                } else if (cmd.startsWith("/r")) {
-                                    if (userName.equals(config().getString("admin"))) {
-                                        db.registerUser(normalizeCmd(cmd), res -> {
-                                            sendReply(update, Boolean.toString(res.succeeded()));
-                                        });
-                                    }
-                                } else if (cmd.startsWith("/u")) {
-                                    if (userName.equals(config().getString("admin"))) {
-                                        db.unregisterUser(normalizeCmd(cmd), res -> {
-                                            sendReply(update, Boolean.toString(res.succeeded()));
-                                        });
-                                    }
                                 } else {
-                                    Search search = searches.get(userName);
-                                    if (search != null) {
-                                        searches.remove(userName);
-                                        switch (search.getSearchType()) {
-                                            case AUTHOR: {
-                                                getAuthor(cmd.trim().replaceAll(" ", "+"), event -> {
-                                                    if (event.succeeded()) {
-                                                        sendReply(update, (SendMessageList) event.result());
-                                                    } else {
-                                                        sendReply(update, "Error happened :(");
-                                                    }
-                                                });
-                                                break;
-                                            }
-                                            case BOOK: {
-                                                getBook(cmd.trim().replaceAll(" ", "+"), event -> {
-                                                    if (event.succeeded()) {
-                                                        sendReply(update, (SendMessageList) event.result());
-                                                    } else {
-                                                        sendReply(update, "Error happened :(");
-                                                    }
-                                                });
-                                                break;
-                                            }
+                                    sendReply(update, "Expired command");
+                                }
+                            } else if (cmd.startsWith("/d")) {
+                                String url = urlCache.getIfPresent(normalizeCmd(cmd));
+                                if (url != null) {
+                                    download(url, event -> {
+                                        if (event.succeeded()) {
+                                            sendFile(update, (SendDocument) event.result());
+                                        } else {
+                                            sendReply(update, "Error happened :(");
                                         }
-                                    } else {
-                                        search = new Search();
-                                        search.setToSearch(cmd.trim().replaceAll(" ", "+"));
-                                        searches.put(userName, search);
-                                        KeyboardButton authorButton = new KeyboardButton();
-                                        authorButton.setText("/author");
-                                        KeyboardButton bookButton = new KeyboardButton();
-                                        bookButton.setText("/book");
-                                        KeyboardRow keyboardRow = new KeyboardRow();
-                                        keyboardRow.add(authorButton);
-                                        keyboardRow.add(bookButton);
-                                        List<KeyboardRow> keyboardRows = new ArrayList<KeyboardRow>();
-                                        keyboardRows.add(keyboardRow);
-                                        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-                                        keyboardMarkup.setKeyboard(keyboardRows);
-                                        keyboardMarkup.setResizeKeyboard(true);
-                                        keyboardMarkup.setSelective(true);
-                                        SendMessage sendMessage = new SendMessage();
-                                        sendMessage.setChatId(update.getMessage().getChatId().toString());
-                                        sendMessage.setReplayMarkup(keyboardMarkup);
-                                        sendMessage.setText("What to search, author or book?");
-                                        sendReply(update, sendMessage);
-                                    }
+                                    });
+                                } else {
+                                    sendReply(update, "Expired command");
+                                }
+                            } else if (cmd.startsWith("/z")) {
+                                String url = urlCache.getIfPresent(normalizeCmd(cmd));
+                                if (url != null) {
+                                    downloadz(url, event -> {
+                                        if (event.succeeded()) {
+                                            sendFile(update, (SendDocument) event.result());
+                                        } else {
+                                            sendReply(update, "Error happened :(");
+                                        }
+                                    });
+                                } else {
+                                    sendReply(update, "Expired command");
+                                }
+                            } else if (cmd.startsWith("/k")) {
+                                catalog(event -> {
+                                    if (event.succeeded()) sendReply(update, (SendMessageList) event.result());
+                                });
+                            } else if (cmd.startsWith("/r")) {
+                                if (userName.equals(config().getString("admin"))) {
+                                    db.registerUser(normalizeCmd(cmd));
+                                }
+                            } else if (cmd.startsWith("/u")) {
+                                if (userName.equals(config().getString("admin"))) {
+                                    db.unregisterUser(normalizeCmd(cmd));
                                 }
                             } else {
-                                sendReply(update, "I do not talk to strangers");
+                                Search search = searches.get(userName);
+                                if (search != null) {
+                                    searches.remove(userName);
+                                    switch (search.getSearchType()) {
+                                        case AUTHOR: {
+                                            getAuthor(cmd.trim().replaceAll(" ", "+"), event -> {
+                                                if (event.succeeded()) {
+                                                    sendReply(update, (SendMessageList) event.result());
+                                                } else {
+                                                    sendReply(update, "Error happened :(");
+                                                }
+                                            });
+                                            break;
+                                        }
+                                        case BOOK: {
+                                            getBook(cmd.trim().replaceAll(" ", "+"), event -> {
+                                                if (event.succeeded()) {
+                                                    sendReply(update, (SendMessageList) event.result());
+                                                } else {
+                                                    sendReply(update, "Error happened :(");
+                                                }
+                                            });
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    search = new Search();
+                                    search.setToSearch(cmd.trim().replaceAll(" ", "+"));
+                                    searches.put(userName, search);
+                                    KeyboardButton authorButton = new KeyboardButton();
+                                    authorButton.setText("/author");
+                                    KeyboardButton bookButton = new KeyboardButton();
+                                    bookButton.setText("/book");
+                                    KeyboardRow keyboardRow = new KeyboardRow();
+                                    keyboardRow.add(authorButton);
+                                    keyboardRow.add(bookButton);
+                                    List<KeyboardRow> keyboardRows = new ArrayList<KeyboardRow>();
+                                    keyboardRows.add(keyboardRow);
+                                    ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+                                    keyboardMarkup.setKeyboard(keyboardRows);
+                                    keyboardMarkup.setResizeKeyboard(true);
+                                    keyboardMarkup.setSelective(true);
+                                    SendMessage sendMessage = new SendMessage();
+                                    sendMessage.setChatId(update.getMessage().getChatId().toString());
+                                    sendMessage.setReplayMarkup(keyboardMarkup);
+                                    sendMessage.setText("What to search, author or book?");
+                                    sendReply(update, sendMessage);
+                                }
                             }
-                        });
+                        } else {
+                            sendReply(update, "I do not talk to strangers");
+                        }
                     }
                 }
             });
