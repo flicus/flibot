@@ -1,8 +1,7 @@
 /*
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016  schors
- *
+ *  Copyright (c) 2016 schors
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -87,6 +86,54 @@ public class FliBot extends AbstractVerticle {
     private Cache<String, String> urlCache;
     private Map<String, Search> searches = new ConcurrentHashMap<>();
     private String rootOPDS;
+    private FileNameParser fileNameParser = new FileNameParser();
+
+    {
+        fileNameParser
+                .add(new FileNameParser.FileType("mobi") {
+                    @Override
+                    public String parse(String url) {
+                        String[] parts = url.split("/");
+                        return parts[parts.length - 2] + "." + parts[parts.length - 1];
+                    }
+                })
+                .add(new FileNameParser.FileType("\\w+\\+zip") {
+                    @Override
+                    public String parse(String url) {
+                        String[] parts = url.split("/");
+                        return parts[parts.length - 2] + "." + parts[parts.length - 1] + ".zip";
+                    }
+                })
+                .add(new FileNameParser.FileType("djvu") {
+                    @Override
+                    public String parse(String url) {
+                        String[] parts = url.split("/");
+                        return parts[parts.length - 1] + ".djvu";
+                    }
+                })
+                .add(new FileNameParser.FileType("pdf") {
+                    @Override
+                    public String parse(String url) {
+                        String[] parts = url.split("/");
+                        return parts[parts.length - 1] + ".pdf";
+                    }
+                })
+                .add(new FileNameParser.FileType("doc") {
+                    @Override
+                    public String parse(String url) {
+                        String[] parts = url.split("/");
+                        return parts[parts.length - 1] + ".doc";
+                    }
+                })
+                .add(new FileNameParser.FileType("\\w+\\+rar") {
+                    @Override
+                    public String parse(String url) {
+                        String[] parts = url.split("/");
+                        return parts[parts.length - 2] + "." + parts[parts.length - 1] + ".rar";
+                    }
+                })
+        ;
+    }
 
     @Override
     public void start() {
@@ -388,17 +435,7 @@ public class FliBot extends AbstractVerticle {
             try {
                 CloseableHttpResponse response = httpclient.execute(httpGet, context);
                 if (response.getStatusLine().getStatusCode() == 200) {
-                    String fileName = "tmp";
-                    if (url.contains("mobi")) {
-                        String[] parts = url.split("/");
-                        fileName = parts[parts.length - 2] + "." + parts[parts.length - 1] + ".mobi";
-                    } else if (url.contains("djvu")) {
-                        String[] parts = url.split("/");
-                        fileName = parts[parts.length - 2] + "." + parts[parts.length - 1] + ".djvu";
-                    } else {
-                        String[] parts = url.split("/");
-                        fileName = parts[parts.length - 2] + "." + parts[parts.length - 1] + ".zip";
-                    }
+                    String fileName = fileNameParser.parse(url);
                     HttpEntity ht = response.getEntity();
                     BufferedHttpEntity buf = new BufferedHttpEntity(ht);
                     File book = File.createTempFile("flibot_" + Long.toHexString(System.currentTimeMillis()), null);
