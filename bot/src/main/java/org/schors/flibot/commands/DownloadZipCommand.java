@@ -1,8 +1,7 @@
 /*
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016  schors
- *
+ *  Copyright (c) 2016 schors
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -29,11 +28,12 @@ import io.vertx.core.Handler;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.streams.Pump;
 import org.schors.flibot.Util;
-import org.schors.flibot.ZipStream;
+import org.schors.flibot.VxZipInputStream;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 import org.telegram.telegrambots.api.methods.send.SendDocument;
 
 import java.io.File;
+import java.io.IOException;
 
 public class DownloadZipCommand extends FlibotCommand {
 
@@ -61,17 +61,28 @@ public class DownloadZipCommand extends FlibotCommand {
         getClient().get(url, res -> {
             if (res.statusCode() == 200) {
                 try {
-                    ZipStream zipStream = new ZipStream(res);
-                    File book = File.createTempFile("flibot_" + Long.toHexString(System.currentTimeMillis()), null);
-                    getBot().getVertx().fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), event -> {
-                        if (event.succeeded()) {
-                            Pump.pump(zipStream
-                                            .endHandler(done -> handler.handle(Util.createResult(true, new SendDocument().setNewDocument(book).setCaption("book"), null)))
-                                            .exceptionHandler(e -> handler.handle(Util.createResult(false, null, (Throwable) e))),
-                                    event.result())
-                                    .start();
+                    VxZipInputStream zipStream = new VxZipInputStream(res);
+                    zipStream.exceptionHandler(e -> handler.handle(Util.createResult(false, null, e)));
+                    zipStream.getNextEntry(entry -> {
+                        if (entry.succeeded()) {
+                            File book = null;
+                            try {
+                                book = File.createTempFile(entry.result().getName(), null);
+                            } catch (IOException e) {
+                                handler.handle(Util.createResult(false, null, e));
+                                return;
+                            }
+                            final File finalBook = book;
+                            getBot().getVertx().fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), output -> {
+                                if (output.succeeded()) {
+                                    zipStream.endHandler(done -> handler.handle(Util.createResult(true, new SendDocument().setNewDocument(finalBook).setCaption("book"), null)));
+                                    Pump.pump(zipStream, output.result()).start();
+                                } else {
+                                    handler.handle(Util.createResult(false, null, output.cause()));
+                                }
+                            });
                         } else {
-                            handler.handle(Util.createResult(false, null, event.cause()));
+                            handler.handle(Util.createResult(false, null, entry.cause()));
                         }
                     });
                 } catch (Exception e) {
