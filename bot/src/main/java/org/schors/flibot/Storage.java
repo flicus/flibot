@@ -52,41 +52,17 @@ public class Storage {
         });
     }
 
-    public static AsyncResult<JsonObject> makeAsyncResult(final JsonObject result, final Throwable cause, final boolean success) {
-        return new AsyncResult<JsonObject>() {
-            @Override
-            public JsonObject result() {
-                return result;
-            }
-
-            @Override
-            public Throwable cause() {
-                return cause;
-            }
-
-            @Override
-            public boolean succeeded() {
-                return success;
-            }
-
-            @Override
-            public boolean failed() {
-                return !success;
-            }
-        };
-    }
-
     public void isRegisteredUser(String userName, Handler<AsyncResult<JsonObject>> handler) {
         client.getConnection(event -> {
             if (event.succeeded()) {
                 event.result().queryWithParams("select 1 from registered where name=?", new JsonArray().add(userName), res -> {
                     if (res.succeeded() && res.result().getNumRows() > 0) {
-                        handler.handle(makeAsyncResult(null, res.cause(), res.succeeded()));
+                        handler.handle(Util.createResult(res.succeeded(), null, res.cause()));
                     } else {
-                        handler.handle(makeAsyncResult(null, null, false));
+                        handler.handle(Util.createResult(false, null, null));
                     }
                 });
-            } else handler.handle(makeAsyncResult(null, null, false));
+            } else handler.handle(Util.createResult(false, null, null));
         });
     }
 
@@ -94,9 +70,9 @@ public class Storage {
         client.getConnection(event -> {
             if (event.succeeded()) {
                 event.result().updateWithParams("insert into registered values(?)", new JsonArray().add(userName), res -> {
-                    handler.handle(makeAsyncResult(null, res.cause(), res.succeeded()));
+                    handler.handle(Util.createResult(res.succeeded(), null, res.cause()));
                 });
-            } else handler.handle(makeAsyncResult(null, null, false));
+            } else handler.handle(Util.createResult(false, null, null));
         });
     }
 
@@ -104,9 +80,9 @@ public class Storage {
         client.getConnection(event -> {
             if (event.succeeded()) {
                 event.result().updateWithParams("delete from registered where name=?", new JsonArray().add(userName), res -> {
-                    handler.handle(makeAsyncResult(null, res.cause(), res.succeeded()));
+                    handler.handle(Util.createResult(res.succeeded(), null, res.cause()));
                 });
-            } else handler.handle(makeAsyncResult(null, null, false));
+            } else handler.handle(Util.createResult(false, null, null));
         });
     }
 
