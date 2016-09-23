@@ -27,6 +27,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.streams.Pump;
+import org.schors.flibot.FileNameParser;
 import org.schors.flibot.Util;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 import org.telegram.telegrambots.api.methods.send.SendDocument;
@@ -34,6 +35,55 @@ import org.telegram.telegrambots.api.methods.send.SendDocument;
 import java.io.File;
 
 public class DownloadCommand extends FlibotCommand {
+
+    private FileNameParser fileNameParser = new FileNameParser();
+
+    {
+        fileNameParser
+                .add(new FileNameParser.FileType("mobi") {
+                    @Override
+                    public String parse(String url) {
+                        String[] parts = url.split("/");
+                        return parts[parts.length - 2] + "." + parts[parts.length - 1];
+                    }
+                })
+                .add(new FileNameParser.FileType("\\w+\\+zip") {
+                    @Override
+                    public String parse(String url) {
+                        String[] parts = url.split("/");
+                        return parts[parts.length - 2] + "." + parts[parts.length - 1] + ".zip";
+                    }
+                })
+                .add(new FileNameParser.FileType("djvu") {
+                    @Override
+                    public String parse(String url) {
+                        String[] parts = url.split("/");
+                        return parts[parts.length - 1] + ".djvu";
+                    }
+                })
+                .add(new FileNameParser.FileType("pdf") {
+                    @Override
+                    public String parse(String url) {
+                        String[] parts = url.split("/");
+                        return parts[parts.length - 1] + ".pdf";
+                    }
+                })
+                .add(new FileNameParser.FileType("doc") {
+                    @Override
+                    public String parse(String url) {
+                        String[] parts = url.split("/");
+                        return parts[parts.length - 1] + ".doc";
+                    }
+                })
+                .add(new FileNameParser.FileType("\\w+\\+rar") {
+                    @Override
+                    public String parse(String url) {
+                        String[] parts = url.split("/");
+                        return parts[parts.length - 2] + "." + parts[parts.length - 1] + ".rar";
+                    }
+                })
+        ;
+    }
 
     public DownloadCommand() {
         super("^/d");
@@ -59,26 +109,26 @@ public class DownloadCommand extends FlibotCommand {
         getClient().get(url, res -> {
             if (res.statusCode() == 200) {
                 try {
-                    File book = File.createTempFile("flibot_" + Long.toHexString(System.currentTimeMillis()), null);
+                    File book = File.createTempFile(fileNameParser.parse(url), null);
                     getBot().getVertx().fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), event -> {
                         if (event.succeeded()) {
                             Pump.pump(res
                                             .endHandler(done -> {
                                                 event.result().close();
-                                                handler.handle(Util.createResult(true, new SendDocument().setNewDocument(book).setCaption("book"), null));
+                                                handler.handle(Util.result(true, new SendDocument().setNewDocument(book).setCaption("book"), null));
                                             })
-                                            .exceptionHandler(e -> handler.handle(Util.createResult(false, null, e))),
+                                            .exceptionHandler(e -> handler.handle(Util.result(false, null, e))),
                                     event.result())
                                     .start();
                         } else {
-                            handler.handle(Util.createResult(false, null, event.cause()));
+                            handler.handle(Util.result(false, null, event.cause()));
                         }
                     });
                 } catch (Exception e) {
-                    handler.handle(Util.createResult(false, null, e));
+                    handler.handle(Util.result(false, null, e));
                 }
             }
-        }).exceptionHandler(e -> handler.handle(Util.createResult(false, null, e)));
+        }).exceptionHandler(e -> handler.handle(Util.result(false, null, e)));
     }
 
     /*    private void download(String url, Handler<AsyncResult<Object>> handler) {

@@ -1,8 +1,7 @@
 /*
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016  schors
- *
+ *  Copyright (c) 2016 schors
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -37,9 +36,7 @@ public class UnregisterUserCommand extends FlibotCommand {
     public void execute(String text, CommandContext context) {
         String userName = context.getUpdate().getMessage().getFrom().getUserName();
         if (userName.equals(getConfig().getString("admin"))) {
-            getDB().unregisterUser(Util.normalizeCmd(text), res -> {
-                sendReply(context, Boolean.toString(res.succeeded()));
-            });
+            getDB().unregisterUser(Util.normalizeCmd(text));
         }
     }
 }

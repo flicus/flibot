@@ -147,12 +147,12 @@ public abstract class FlibotCommand extends Command {
                             } else {
                                 result.append("Nothing found");
                             }
-                            handler.handle(Util.createResult(true, result, null));
+                            handler.handle(Util.result(true, result, null));
                         })
                         .exceptionHandler(e -> {
-                            handler.handle(Util.createResult(false, null, e));
+                            handler.handle(Util.result(false, null, e));
                         });
-            } else handler.handle(Util.createResult(false, null, new BotException(event.statusMessage())));
+            } else handler.handle(Util.result(false, null, new BotException(event.statusMessage())));
         });
     }
 }

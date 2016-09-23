@@ -108,13 +108,11 @@ public class FliBot extends AbstractVerticle {
                         String text = update.getMessage().getText();
                         String userName = update.getMessage().getFrom().getUserName();
                         log.warn("onUpdate: " + text + ", " + userName);
-                        db.isRegisteredUser(userName, registrationRes -> {
-                            if (registrationRes.succeeded() && registrationRes.result().getBoolean("res")) {
+                        if (db.isRegisteredUser(userName)) {
                                 cm.execute(text, cm.createContext(update));
-                            } else {
-                                sendReply(update, "I do not talk to strangers");
-                            }
-                        });
+                        } else {
+                            sendReply(update, "I do not talk to strangers");
+                        }
                     }
                 }))
                 .addFacility(Util.HTTP_CLIENT, httpclient)

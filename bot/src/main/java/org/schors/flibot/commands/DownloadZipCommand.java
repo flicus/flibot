@@ -62,35 +62,35 @@ public class DownloadZipCommand extends FlibotCommand {
             if (res.statusCode() == 200) {
                 try {
                     VxZipInputStream zipStream = new VxZipInputStream(res);
-                    zipStream.exceptionHandler(e -> handler.handle(Util.createResult(false, null, e)));
+                    zipStream.exceptionHandler(e -> handler.handle(Util.result(false, null, e)));
                     zipStream.getNextEntry(entry -> {
                         if (entry.succeeded()) {
                             File book = null;
                             try {
                                 book = File.createTempFile(entry.result().getName(), null);
                             } catch (IOException e) {
-                                handler.handle(Util.createResult(false, null, e));
+                                handler.handle(Util.result(false, null, e));
                                 return;
                             }
                             final File finalBook = book;
                             getBot().getVertx().fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), output -> {
                                 if (output.succeeded()) {
-                                    zipStream.endHandler(done -> handler.handle(Util.createResult(true, new SendDocument().setNewDocument(finalBook).setCaption("book"), null)));
+                                    zipStream.endHandler(done -> handler.handle(Util.result(true, new SendDocument().setNewDocument(finalBook).setCaption("book"), null)));
                                     Pump.pump(zipStream, output.result()).start();
                                 } else {
-                                    handler.handle(Util.createResult(false, null, output.cause()));
+                                    handler.handle(Util.result(false, null, output.cause()));
                                 }
                             });
                         } else {
-                            handler.handle(Util.createResult(false, null, entry.cause()));
+                            handler.handle(Util.result(false, null, entry.cause()));
                         }
                     });
                 } catch (Exception e) {
-                    handler.handle(Util.createResult(false, null, e));
+                    handler.handle(Util.result(false, null, e));
                 }
             }
         }).exceptionHandler(e -> {
-            handler.handle(Util.createResult(false, null, e));
+            handler.handle(Util.result(false, null, e));
         });
     }
 }

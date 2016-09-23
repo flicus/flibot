@@ -23,41 +23,48 @@
 
 package org.schors.flibot;
 
-import io.vertx.core.AsyncResult;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class Util {
+public class FileNameParser {
 
-    public static final String HTTP_CLIENT = "httpClient";
-    public static final String CACHE = "cache";
-    public static final String SEARCHES = "searches";
-    public static final String DB = "db";
-    public static final String CONFIG = "config";
+    private List<FileType> types = new ArrayList<>();
+    private FileType unknown = new FileType("any") {
+        @Override
+        public String parse(String url) {
+            return url.replaceAll("/", ".");
+        }
+    };
 
-    public static AsyncResult result(boolean success, Object result, Throwable e) {
-        return new AsyncResult() {
-            @Override
-            public Object result() {
-                return result;
-            }
-
-            @Override
-            public Throwable cause() {
-                return e;
-            }
-
-            @Override
-            public boolean succeeded() {
-                return success;
-            }
-
-            @Override
-            public boolean failed() {
-                return !success;
-            }
-        };
+    public String parse(String url) {
+        return types
+                .stream()
+                .filter(fileType -> fileType.isMatch(url))
+                .findAny()
+                .orElse(unknown).parse(url);
     }
 
-    public static String normalizeCmd(String cmd) {
-        return cmd.split("@")[0].substring(2).trim().replaceAll(" ", "+");
+    public FileNameParser add(FileType fileType) {
+        if (!types.contains(fileType)) {
+            types.add(fileType);
+        }
+        return this;
+    }
+
+    public static abstract class FileType {
+        private Pattern p;
+
+        public FileType(String pattern) {
+            this.p = Pattern.compile(pattern);
+        }
+
+        public boolean isMatch(String url) {
+            Matcher m = p.matcher(url);
+            return m.find();
+        }
+
+        public abstract String parse(String url);
     }
 }
