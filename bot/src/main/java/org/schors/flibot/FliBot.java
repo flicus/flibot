@@ -43,7 +43,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.log4j.Logger;
-import org.telegram.telegrambots.TelegramApiException;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.ActionType;
 import org.telegram.telegrambots.api.methods.send.SendChatAction;
@@ -55,8 +54,10 @@ import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -178,7 +179,6 @@ public class FliBot extends AbstractVerticle {
                     } catch (TelegramApiException e) {
                         log.error(e, e);
                     }
-//                    return result;
                 }
 
                 private void sendReply(Update update, SendMessage res) {
@@ -417,7 +417,7 @@ public class FliBot extends AbstractVerticle {
                     zip.close();
 
                     final SendDocument sendDocument = new SendDocument();
-                    sendDocument.setNewDocument(book.getAbsolutePath(), entry.getName());
+                    sendDocument.setNewDocument(entry.getName(), new FileInputStream(book));
                     sendDocument.setCaption("book");
                     future.complete(sendDocument);
                 }
@@ -442,7 +442,7 @@ public class FliBot extends AbstractVerticle {
                     File book = File.createTempFile("flibot_" + Long.toHexString(System.currentTimeMillis()), null);
                     buf.writeTo(new FileOutputStream(book));
                     final SendDocument sendDocument = new SendDocument();
-                    sendDocument.setNewDocument(book.getAbsolutePath(), fileName);
+                    sendDocument.setNewDocument(fileName, new FileInputStream(book));
                     sendDocument.setCaption("book");
                     future.complete(sendDocument);
                 }
