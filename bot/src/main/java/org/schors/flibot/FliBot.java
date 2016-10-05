@@ -45,6 +45,7 @@ import org.apache.http.ssl.SSLContexts;
 import org.apache.log4j.Logger;
 import org.telegram.telegrambots.TelegramApiException;
 import org.telegram.telegrambots.TelegramBotsApi;
+import org.telegram.telegrambots.api.methods.ActionType;
 import org.telegram.telegrambots.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.api.methods.send.SendDocument;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
@@ -218,7 +219,7 @@ public class FliBot extends AbstractVerticle {
                 private void sendBusy(Update update) {
                     SendChatAction sca = new SendChatAction();
                     sca.setChatId(update.getMessage().getChatId().toString());
-                    sca.setAction("upload_document");
+                    sca.setAction(ActionType.UPLOADDOCUMENT);
                     try {
                         sendChatAction(sca);
                     } catch (TelegramApiException e) {
@@ -370,7 +371,7 @@ public class FliBot extends AbstractVerticle {
                                     keyboardMarkup.setSelective(true);
                                     SendMessage sendMessage = new SendMessage();
                                     sendMessage.setChatId(update.getMessage().getChatId().toString());
-                                    sendMessage.setReplayMarkup(keyboardMarkup);
+                                    sendMessage.setReplyMarkup(keyboardMarkup);
                                     sendMessage.setText("What to search, author or book?");
                                     sendReply(update, sendMessage);
                                 }
