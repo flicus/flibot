@@ -29,8 +29,8 @@ import io.vertx.core.file.OpenOptions;
 import io.vertx.core.streams.Pump;
 import org.schors.flibot.Util;
 import org.schors.flibot.VxZipInputStream;
+import org.schors.vertx.telegram.bot.api.methods.SendDocument;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
-import org.telegram.telegrambots.api.methods.send.SendDocument;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,7 +75,7 @@ public class DownloadZipCommand extends FlibotCommand {
                             final File finalBook = book;
                             getBot().getVertx().fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), output -> {
                                 if (output.succeeded()) {
-                                    zipStream.endHandler(done -> handler.handle(Util.result(true, new SendDocument().setNewDocument(finalBook).setCaption("book"), null)));
+                                    zipStream.endHandler(done -> handler.handle(Util.result(true, new SendDocument().setDocument(finalBook.getAbsolutePath()).setCaption("book"), null)));
                                     Pump.pump(zipStream, output.result()).start();
                                 } else {
                                     handler.handle(Util.result(false, null, output.cause()));

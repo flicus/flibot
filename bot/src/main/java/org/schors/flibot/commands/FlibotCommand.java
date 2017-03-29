@@ -31,11 +31,12 @@ import io.vertx.core.json.JsonObject;
 import org.schors.flibot.*;
 import org.schors.flibot.opds.Page;
 import org.schors.flibot.opds.PageParser;
+import org.schors.vertx.telegram.bot.api.methods.SendDocument;
+import org.schors.vertx.telegram.bot.api.methods.SendMessage;
+import org.schors.vertx.telegram.bot.api.types.Message;
+import org.schors.vertx.telegram.bot.api.util.ParseMode;
 import org.schors.vertx.telegram.bot.commands.Command;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
-import org.telegram.telegrambots.api.methods.send.SendDocument;
-import org.telegram.telegrambots.api.methods.send.SendMessage;
-import org.telegram.telegrambots.api.objects.Message;
 
 import java.util.Map;
 
@@ -72,7 +73,7 @@ public abstract class FlibotCommand extends Command {
         getBot().sendMessage(new SendMessage()
                 .setChatId(context.getUpdate().getMessage().getChatId())
                 .setText(res)
-                .enableHtml(true));
+                .setParseMode(ParseMode.html));
     }
 
     protected void sendReply(CommandContext context, SendMessage res) {
@@ -153,6 +154,8 @@ public abstract class FlibotCommand extends Command {
                             handler.handle(Util.result(false, null, e));
                         });
             } else handler.handle(Util.result(false, null, new BotException(event.statusMessage())));
-        });
+        }).exceptionHandler(e -> {
+            handler.handle(Util.result(false, null, new BotException(e)));
+        }).end();
     }
 }

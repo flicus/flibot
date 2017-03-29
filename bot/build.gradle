@@ -24,7 +24,8 @@
 group 'schors'
 
 dependencies {
-    compile 'com.github.flicus:vertx-telegram-bot-api:v0.0.9'
+    compile project(":vertx-telegram-bot-api")
+//    compile 'com.github.flicus:vertx-telegram-bot-api:v0.0.9'
     compile 'org.jdom:jdom2:2.0.6'
     compile 'com.google.guava:guava:19.0'
 }

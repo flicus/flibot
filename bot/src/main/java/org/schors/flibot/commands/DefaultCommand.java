@@ -1,8 +1,7 @@
 /*
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016  schors
- *
+ *  Copyright (c) 2016 schors
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -28,14 +27,10 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import org.schors.flibot.Search;
 import org.schors.flibot.SendMessageList;
+import org.schors.vertx.telegram.bot.api.methods.SendMessage;
+import org.schors.vertx.telegram.bot.api.types.KeyboardButton;
+import org.schors.vertx.telegram.bot.api.types.ReplyKeyboardMarkup;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
-import org.telegram.telegrambots.api.methods.send.SendMessage;
-import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
-import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class DefaultCommand extends FlibotCommand {
 
@@ -45,7 +40,7 @@ public class DefaultCommand extends FlibotCommand {
 
     @Override
     public void execute(String text, CommandContext context) {
-        String userName = context.getUpdate().getMessage().getFrom().getUserName();
+        String userName = context.getUpdate().getMessage().getFrom().getUsername();
         Search search = getSearches().get(userName);
         if (search != null) {
             getSearches().remove(userName);
@@ -79,11 +74,7 @@ public class DefaultCommand extends FlibotCommand {
             authorButton.setText("/author");
             KeyboardButton bookButton = new KeyboardButton();
             bookButton.setText("/book");
-            KeyboardRow keyboardRow = new KeyboardRow();
-            keyboardRow.add(authorButton);
-            keyboardRow.add(bookButton);
-            List<KeyboardRow> keyboardRows = new ArrayList<>();
-            keyboardRows.add(keyboardRow);
+            KeyboardButton[][] keyboardRows = new KeyboardButton[][]{{authorButton, bookButton}};
             ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
             keyboardMarkup.setKeyboard(keyboardRows);
             keyboardMarkup.setResizeKeyboard(true);

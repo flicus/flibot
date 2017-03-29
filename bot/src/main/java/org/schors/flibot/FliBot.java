@@ -35,11 +35,12 @@ import org.schors.flibot.commands.*;
 import org.schors.vertx.telegram.bot.LongPollingReceiver;
 import org.schors.vertx.telegram.bot.TelegramBot;
 import org.schors.vertx.telegram.bot.TelegramOptions;
+import org.schors.vertx.telegram.bot.api.methods.SendChatAction;
+import org.schors.vertx.telegram.bot.api.methods.SendMessage;
+import org.schors.vertx.telegram.bot.api.types.Action;
+import org.schors.vertx.telegram.bot.api.types.Update;
+import org.schors.vertx.telegram.bot.api.util.ParseMode;
 import org.schors.vertx.telegram.bot.commands.CommandManager;
-import org.telegram.telegrambots.api.methods.ActionType;
-import org.telegram.telegrambots.api.methods.send.SendChatAction;
-import org.telegram.telegrambots.api.methods.send.SendMessage;
-import org.telegram.telegrambots.api.objects.Update;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,14 +85,14 @@ public class FliBot extends AbstractVerticle {
                 .setTrustAll(true)
                 .setIdleTimeout(50)
                 .setMaxPoolSize(100)
-                .setDefaultHost(usetor ? rootOPDStor : rootOPDShttp)
+                .setDefaultHost(/*usetor ? rootOPDStor : */rootOPDShttp)
                 .setDefaultPort(80)
                 .setLogActivity(true);
 
         if (usetor) {
             httpOptions
                     .setProxyOptions(new ProxyOptions()
-                            .setType(ProxyType.SOCKS5)
+                            .setType(ProxyType.HTTP)
                             .setHost(config().getString("torhost"))
                             .setPort(Integer.valueOf(config().getString("torport"))));
         }
@@ -99,14 +100,15 @@ public class FliBot extends AbstractVerticle {
 
         TelegramOptions telegramOptions = new TelegramOptions()
                 .setBotName(config().getString("name"))
-                .setBotToken(config().getString("token"));
+                .setBotToken(config().getString("token"))
+                .setProxyOptions(new ProxyOptions().setType(ProxyType.HTTP).setPort(8080).setHost("genproxy"));
 
         bot = TelegramBot.create(vertx, telegramOptions, cm)
                 .receiver(new LongPollingReceiver().onUpdate(update -> {
                     if (update.hasMessage() && update.getMessage().hasText()) {
                         sendBusy(update);
                         String text = update.getMessage().getText();
-                        String userName = update.getMessage().getFrom().getUserName();
+                        String userName = update.getMessage().getFrom().getUsername();
                         log.warn("onUpdate: " + text + ", " + userName);
                         if (db.isRegisteredUser(userName)) {
                                 cm.execute(text, cm.createContext(update));
@@ -127,12 +129,12 @@ public class FliBot extends AbstractVerticle {
         bot.sendMessage(new SendMessage()
                 .setChatId(update.getMessage().getChatId())
                 .setText(res)
-                .enableHtml(true));
+                .setParseMode(ParseMode.html));
     }
 
     private void sendBusy(Update update) {
         bot.sendChatAction(new SendChatAction()
                 .setChatId(update.getMessage().getChatId())
-                .setAction(ActionType.UPLOADDOCUMENT));
+                .setAction(Action.UPLOADDOCUMENT));
     }
 }

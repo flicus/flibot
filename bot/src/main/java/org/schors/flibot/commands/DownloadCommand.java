@@ -29,8 +29,8 @@ import io.vertx.core.file.OpenOptions;
 import io.vertx.core.streams.Pump;
 import org.schors.flibot.FileNameParser;
 import org.schors.flibot.Util;
+import org.schors.vertx.telegram.bot.api.methods.SendDocument;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
-import org.telegram.telegrambots.api.methods.send.SendDocument;
 
 import java.io.File;
 
@@ -115,7 +115,7 @@ public class DownloadCommand extends FlibotCommand {
                             Pump.pump(res
                                             .endHandler(done -> {
                                                 event.result().close();
-                                                handler.handle(Util.result(true, new SendDocument().setNewDocument(book).setCaption("book"), null));
+                                                handler.handle(Util.result(true, new SendDocument().setDocument(book.getAbsolutePath()).setCaption("book"), null));
                                             })
                                             .exceptionHandler(e -> handler.handle(Util.result(false, null, e))),
                                     event.result())
