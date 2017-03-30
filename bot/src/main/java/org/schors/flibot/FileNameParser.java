@@ -34,7 +34,8 @@ public class FileNameParser {
     private FileType unknown = new FileType("any") {
         @Override
         public String parse(String url) {
-            return url.replaceAll("/", ".");
+            String[] parts = url.split("/");
+            return parts[parts.length - 1];
         }
     };
 
