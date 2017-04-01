@@ -26,12 +26,13 @@ package org.schors.flibot.commands;
 import org.schors.flibot.Search;
 import org.schors.flibot.SearchType;
 import org.schors.flibot.SendMessageList;
+import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
+@BotCommand(regexp = "^/book")
 public class GetBookCommand extends FlibotCommand {
 
     public GetBookCommand() {
-        super("^/book");
     }
 
     @Override

@@ -24,4 +24,4 @@
 rootProject.name = 'flibot'
 include 'starter'
 include 'bot'
-include 'vertx-telegram-bot-api'
+

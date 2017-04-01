@@ -31,9 +31,12 @@ import io.vertx.core.json.JsonObject;
 import org.schors.flibot.*;
 import org.schors.flibot.opds.Page;
 import org.schors.flibot.opds.PageParser;
+import org.schors.vertx.telegram.bot.api.methods.SendChatAction;
 import org.schors.vertx.telegram.bot.api.methods.SendDocument;
 import org.schors.vertx.telegram.bot.api.methods.SendMessage;
+import org.schors.vertx.telegram.bot.api.types.Action;
 import org.schors.vertx.telegram.bot.api.types.Message;
+import org.schors.vertx.telegram.bot.api.types.Update;
 import org.schors.vertx.telegram.bot.api.util.ParseMode;
 import org.schors.vertx.telegram.bot.commands.Command;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
@@ -45,8 +48,7 @@ public abstract class FlibotCommand extends Command {
     public static final String authorSearch = "/search?searchType=authors&searchTerm=%s";
     public static final String bookSearch = "/search?searchType=books&searchTerm=%s";
 
-    public FlibotCommand(String regexp) {
-        super(regexp);
+    public FlibotCommand() {
     }
 
     protected HttpClient getClient() {
@@ -95,6 +97,12 @@ public abstract class FlibotCommand extends Command {
         res.setChatId(context.getUpdate().getMessage().getChatId());
         getBot().sendDocument(res);
         return result;
+    }
+
+    protected void sendBusy(Update update) {
+        getBot().sendChatAction(new SendChatAction()
+                .setChatId(update.getMessage().getChatId())
+                .setAction(Action.UPLOADDOCUMENT));
     }
 
     protected void doGenericRequest(String url, Handler<AsyncResult<Object>> handler) {

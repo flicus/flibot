@@ -31,16 +31,9 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.net.ProxyOptions;
 import io.vertx.core.net.ProxyType;
 import org.apache.log4j.Logger;
-import org.schors.flibot.commands.*;
 import org.schors.vertx.telegram.bot.LongPollingReceiver;
 import org.schors.vertx.telegram.bot.TelegramBot;
 import org.schors.vertx.telegram.bot.TelegramOptions;
-import org.schors.vertx.telegram.bot.api.methods.SendChatAction;
-import org.schors.vertx.telegram.bot.api.methods.SendMessage;
-import org.schors.vertx.telegram.bot.api.types.Action;
-import org.schors.vertx.telegram.bot.api.types.Update;
-import org.schors.vertx.telegram.bot.api.util.ParseMode;
-import org.schors.vertx.telegram.bot.commands.CommandManager;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -55,26 +48,13 @@ public class FliBot extends AbstractVerticle {
 
     private static final Logger log = Logger.getLogger(FliBot.class);
 
-    private TelegramBot bot;
     private HttpClient httpclient;
     private Storage db;
     private Cache<String, String> urlCache;
     private Map<String, Search> searches = new ConcurrentHashMap<>();
-    private CommandManager cm;
 
     @Override
     public void start() {
-
-        cm = new CommandManager()
-                .addCommand(new GetAuthorCommand())
-                .addCommand(new GetBookCommand())
-                .addCommand(new CatalogCommand())
-                .addCommand(new RegisterUserCommand())
-                .addCommand(new UnregisterUserCommand())
-                .addCommand(new DownloadCommand())
-                .addCommand(new DownloadZipCommand())
-                .addCommand(new GetCmdCommand())
-                .setDefaultCommand(new DefaultCommand());
 
         db = new Storage(vertx, config().getString("admin"));
         urlCache = CacheBuilder.newBuilder().maximumSize(1000).build();
@@ -103,38 +83,15 @@ public class FliBot extends AbstractVerticle {
                 .setBotToken(config().getString("token"))
                 .setProxyOptions(new ProxyOptions().setType(ProxyType.HTTP).setPort(8080).setHost("genproxy"));
 
-        bot = TelegramBot.create(vertx, telegramOptions, cm)
-                .receiver(new LongPollingReceiver().onUpdate(update -> {
-                    if (update.hasMessage() && update.getMessage().hasText()) {
-                        sendBusy(update);
-                        String text = update.getMessage().getText();
-                        String userName = update.getMessage().getFrom().getUsername();
-                        log.warn("onUpdate: " + text + ", " + userName);
-                        if (db.isRegisteredUser(userName)) {
-                                cm.execute(text, cm.createContext(update));
-                        } else {
-                            sendReply(update, "I do not talk to strangers");
-                        }
-                    }
-                }))
+
+        TelegramBot bot = TelegramBot.create(vertx, telegramOptions)
+                .receiver(new LongPollingReceiver())
+                .useCommandManager("org.schors.flibot")
                 .addFacility(Util.HTTP_CLIENT, httpclient)
                 .addFacility(Util.CACHE, urlCache)
                 .addFacility(Util.SEARCHES, searches)
                 .addFacility(Util.DB, db)
                 .addFacility(Util.CONFIG, config())
                 .start();
-    }
-
-    private void sendReply(Update update, String res) {
-        bot.sendMessage(new SendMessage()
-                .setChatId(update.getMessage().getChatId())
-                .setText(res)
-                .setParseMode(ParseMode.html));
-    }
-
-    private void sendBusy(Update update) {
-        bot.sendChatAction(new SendChatAction()
-                .setChatId(update.getMessage().getChatId())
-                .setAction(Action.UPLOADDOCUMENT));
     }
 }
