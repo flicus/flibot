@@ -24,23 +24,25 @@
 package org.schors.flibot.commands;
 
 import io.vertx.core.Handler;
+import org.schors.flibot.Storage;
 import org.schors.flibot.Util;
 import org.schors.vertx.telegram.bot.commands.BotCommand;
+import org.schors.vertx.telegram.bot.commands.Command;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
-@BotCommand(regexp = "^/u")
-public class UnregisterUserCommand extends FlibotCommand {
+@BotCommand(isPreExecute = true)
+public class UserCheck extends Command {
 
-    public UnregisterUserCommand() {
+    private Storage getDB() {
+        return (Storage) getBot().getFacility(Util.DB);
     }
 
     @Override
     public void execute(CommandContext context, Handler<Boolean> handler) {
-        String text = context.getUpdate().getMessage().getText();
         String userName = context.getUpdate().getMessage().getFrom().getUsername();
-        if (userName.equals(getConfig().getString("admin"))) {
-            getDB().unregisterUser(Util.normalizeCmd(text));
-            handler.handle(Boolean.TRUE);
-        }
+        if (!getDB().isRegisteredUser(userName)) {
+            sendReply(context, "I do not talk to strangers");
+            handler.handle(Boolean.FALSE);
+        } else handler.handle(Boolean.TRUE);
     }
 }

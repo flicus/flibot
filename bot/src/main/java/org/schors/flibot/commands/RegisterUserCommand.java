@@ -23,6 +23,7 @@
 
 package org.schors.flibot.commands;
 
+import io.vertx.core.Handler;
 import org.schors.flibot.Util;
 import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
@@ -34,10 +35,12 @@ public class RegisterUserCommand extends FlibotCommand {
     }
 
     @Override
-    public void execute(String text, CommandContext context) {
+    public void execute(CommandContext context, Handler<Boolean> handler) {
+        String text = context.getUpdate().getMessage().getText();
         String userName = context.getUpdate().getMessage().getFrom().getUsername();
         if (userName.equals(getConfig().getString("admin"))) {
             getDB().registerUser(Util.normalizeCmd(text));
+            handler.handle(Boolean.TRUE);
         }
     }
 }

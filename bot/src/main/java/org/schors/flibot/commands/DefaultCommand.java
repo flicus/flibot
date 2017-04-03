@@ -40,8 +40,9 @@ public class DefaultCommand extends FlibotCommand {
     }
 
     @Override
-    public void execute(String text, CommandContext context) {
+    public void execute(CommandContext context, Handler<Boolean> handler) {
         String userName = context.getUpdate().getMessage().getFrom().getUsername();
+        String text = context.getUpdate().getMessage().getText();
         Search search = getSearches().get(userName);
         if (search != null) {
             getSearches().remove(userName);
@@ -50,8 +51,10 @@ public class DefaultCommand extends FlibotCommand {
                     getAuthor(text.trim().replaceAll(" ", "+"), event -> {
                         if (event.succeeded()) {
                             sendReply(context, (SendMessageList) event.result());
+                            handler.handle(Boolean.TRUE);
                         } else {
                             sendReply(context, "Error happened :(");
+                            handler.handle(Boolean.FALSE);
                         }
                     });
                     break;
@@ -60,8 +63,10 @@ public class DefaultCommand extends FlibotCommand {
                     getBook(text.trim().replaceAll(" ", "+"), event -> {
                         if (event.succeeded()) {
                             sendReply(context, (SendMessageList) event.result());
+                            handler.handle(Boolean.TRUE);
                         } else {
                             sendReply(context, "Error happened :(");
+                            handler.handle(Boolean.FALSE);
                         }
                     });
                     break;
@@ -85,6 +90,7 @@ public class DefaultCommand extends FlibotCommand {
             sendMessage.setReplyMarkup(keyboardMarkup);
             sendMessage.setText("What to search, author or book?");
             sendReply(context, sendMessage);
+            handler.handle(Boolean.TRUE);
         }
     }
 

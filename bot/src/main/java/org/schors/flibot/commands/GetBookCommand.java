@@ -23,6 +23,7 @@
 
 package org.schors.flibot.commands;
 
+import io.vertx.core.Handler;
 import org.schors.flibot.Search;
 import org.schors.flibot.SearchType;
 import org.schors.flibot.SendMessageList;
@@ -36,7 +37,7 @@ public class GetBookCommand extends FlibotCommand {
     }
 
     @Override
-    public void execute(String text, CommandContext context) {
+    public void execute(CommandContext context, Handler<Boolean> handler) {
         String userName = context.getUpdate().getMessage().getFrom().getUsername();
         Search search = getSearches().get(userName);
         if (search != null) {
@@ -44,8 +45,10 @@ public class GetBookCommand extends FlibotCommand {
             doGenericRequest("/opds" + String.format(bookSearch, search.getToSearch()), event -> {
                 if (event.succeeded()) {
                     sendReply(context, (SendMessageList) event.result());
+                    handler.handle(Boolean.TRUE);
                 } else {
                     sendReply(context, "Error happened :(");
+                    handler.handle(Boolean.FALSE);
                 }
             });
         } else {
@@ -53,6 +56,7 @@ public class GetBookCommand extends FlibotCommand {
             search.setSearchType(SearchType.BOOK);
             getSearches().put(userName, search);
             sendReply(context, "Please enter the book name to search");
+            handler.handle(Boolean.TRUE);
         }
     }
 }

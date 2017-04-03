@@ -91,18 +91,22 @@ public class DownloadCommand extends FlibotCommand {
     }
 
     @Override
-    public void execute(String text, CommandContext context) {
+    public void execute(CommandContext context, Handler<Boolean> handler) {
+        String text = context.getUpdate().getMessage().getText();
         String url = getCache().getIfPresent(Util.normalizeCmd(text));
         if (url != null) {
             download(url, event -> {
                 if (event.succeeded()) {
                     sendFile(context, (SendDocument) event.result());
+                    handler.handle(Boolean.TRUE);
                 } else {
                     sendReply(context, "Error happened :(");
+                    handler.handle(Boolean.FALSE);
                 }
             });
         } else {
             sendReply(context, "Expired command");
+            handler.handle(Boolean.FALSE);
         }
     }
 

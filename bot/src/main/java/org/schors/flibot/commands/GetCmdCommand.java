@@ -1,8 +1,7 @@
 /*
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016  schors
- *
+ *  Copyright (c) 2016 schors
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -24,6 +23,7 @@
 
 package org.schors.flibot.commands;
 
+import io.vertx.core.Handler;
 import org.schors.flibot.SendMessageList;
 import org.schors.flibot.Util;
 import org.schors.vertx.telegram.bot.commands.BotCommand;
@@ -33,22 +33,25 @@ import org.schors.vertx.telegram.bot.commands.CommandContext;
 public class GetCmdCommand extends FlibotCommand {
 
     public GetCmdCommand() {
-
     }
 
     @Override
-    public void execute(String text, CommandContext context) {
+    public void execute(CommandContext context, Handler<Boolean> handler) {
+        String text = context.getUpdate().getMessage().getText();
         String url = getCache().getIfPresent(Util.normalizeCmd(text));
         if (url != null) {
             doGenericRequest(url, event -> {
                 if (event.succeeded()) {
                     sendReply(context, (SendMessageList) event.result());
+                    handler.handle(Boolean.TRUE);
                 } else {
                     sendReply(context, "Error happened :(");
+                    handler.handle(Boolean.FALSE);
                 }
             });
         } else {
             sendReply(context, "Expired command");
+            handler.handle(Boolean.FALSE);
         }
     }
 }
