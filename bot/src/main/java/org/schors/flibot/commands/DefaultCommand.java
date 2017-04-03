@@ -30,12 +30,13 @@ import org.schors.flibot.SendMessageList;
 import org.schors.vertx.telegram.bot.api.methods.SendMessage;
 import org.schors.vertx.telegram.bot.api.types.KeyboardButton;
 import org.schors.vertx.telegram.bot.api.types.ReplyKeyboardMarkup;
+import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
+@BotCommand(isDefault = true)
 public class DefaultCommand extends FlibotCommand {
 
     public DefaultCommand() {
-        super("no need in regexp");
     }
 
     @Override

@@ -27,12 +27,13 @@ package org.schors.flibot.commands;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import org.schors.flibot.SendMessageList;
+import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
+@BotCommand(regexp = "^/k")
 public class CatalogCommand extends FlibotCommand {
 
     public CatalogCommand() {
-        super("^/k");
     }
 
     @Override

@@ -30,15 +30,17 @@ import io.vertx.core.streams.Pump;
 import org.schors.flibot.Util;
 import org.schors.flibot.VxZipInputStream;
 import org.schors.vertx.telegram.bot.api.methods.SendDocument;
+import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
 import java.io.File;
 import java.io.IOException;
 
+@BotCommand(regexp = "^/z")
 public class DownloadZipCommand extends FlibotCommand {
 
     public DownloadZipCommand() {
-        super("^/z");
+
     }
 
     @Override

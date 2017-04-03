@@ -24,12 +24,13 @@
 package org.schors.flibot.commands;
 
 import org.schors.flibot.Util;
+import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
+@BotCommand(regexp = "^/r")
 public class RegisterUserCommand extends FlibotCommand {
 
     public RegisterUserCommand() {
-        super("^/r");
     }
 
     @Override

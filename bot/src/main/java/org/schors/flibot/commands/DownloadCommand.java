@@ -30,10 +30,12 @@ import io.vertx.core.streams.Pump;
 import org.schors.flibot.FileNameParser;
 import org.schors.flibot.Util;
 import org.schors.vertx.telegram.bot.api.methods.SendDocument;
+import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
 import java.io.File;
 
+@BotCommand(regexp = "^/d")
 public class DownloadCommand extends FlibotCommand {
 
     private FileNameParser fileNameParser = new FileNameParser();
@@ -86,7 +88,6 @@ public class DownloadCommand extends FlibotCommand {
     }
 
     public DownloadCommand() {
-        super("^/d");
     }
 
     @Override

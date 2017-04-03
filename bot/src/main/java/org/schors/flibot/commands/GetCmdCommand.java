@@ -26,12 +26,14 @@ package org.schors.flibot.commands;
 
 import org.schors.flibot.SendMessageList;
 import org.schors.flibot.Util;
+import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
+@BotCommand(regexp = "^/c")
 public class GetCmdCommand extends FlibotCommand {
 
     public GetCmdCommand() {
-        super("^/c");
+
     }
 
     @Override
