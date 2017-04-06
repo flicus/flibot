@@ -28,28 +28,26 @@ import io.vertx.core.Handler;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.streams.Pump;
 import org.schors.flibot.Util;
-import org.schors.flibot.VxZipInputStream;
+import org.schors.vertx.telegram.bot.api.methods.AnswerInlineQuery;
 import org.schors.vertx.telegram.bot.api.methods.SendDocument;
+import org.schors.vertx.telegram.bot.api.types.inline.InlineQueryResult;
 import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
 import java.io.File;
-import java.io.IOException;
 
-@BotCommand(message = "^/z")
-public class DownloadZipCommand extends FlibotCommand {
-
-    public DownloadZipCommand() {
-
-    }
+@BotCommand(inline = "^share")
+public class ShareInlineCommand extends FlibotCommand {
 
     @Override
     public void execute(CommandContext context, Handler<Boolean> handler) {
-        String text = context.getUpdate().getMessage().getText();
+        String text = context.getUpdate().getInlineQuery().getQuery().split("_")[1];
         String url = getCache().getIfPresent(Util.normalizeCmd(text));
+
         if (url != null) {
-            downloadz(url, event -> {
+            download(url, event -> {
                 if (event.succeeded()) {
+                    sendInlineAnswer(new AnswerInlineQuery().setResults(new InlineQueryResult[]{new}));
                     sendFile(context, (SendDocument) event.result());
                     handler.handle(Boolean.TRUE);
                 } else {
@@ -63,40 +61,29 @@ public class DownloadZipCommand extends FlibotCommand {
         }
     }
 
-    private void downloadz(String url, Handler<AsyncResult<Object>> handler) {
+    private void download(String url, Handler<AsyncResult<Object>> handler) {
         getClient().get(url, res -> {
             if (res.statusCode() == 200) {
                 try {
-                    VxZipInputStream zipStream = new VxZipInputStream(res);
-                    zipStream.exceptionHandler(e -> handler.handle(Util.result(false, null, e)));
-                    zipStream.getNextEntry(entry -> {
-                        if (entry.succeeded()) {
-                            File book = null;
-                            try {
-                                book = File.createTempFile(entry.result().getName(), null);
-                            } catch (IOException e) {
-                                handler.handle(Util.result(false, null, e));
-                                return;
-                            }
-                            final File finalBook = book;
-                            getBot().getVertx().fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), output -> {
-                                if (output.succeeded()) {
-                                    zipStream.endHandler(done -> handler.handle(Util.result(true, new SendDocument().setDocument(finalBook.getAbsolutePath()).setCaption("book"), null)));
-                                    Pump.pump(zipStream, output.result()).start();
-                                } else {
-                                    handler.handle(Util.result(false, null, output.cause()));
-                                }
-                            });
+                    File book = File.createTempFile(fileNameParser.parse(url), null);
+                    getBot().getVertx().fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), event -> {
+                        if (event.succeeded()) {
+                            Pump.pump(res
+                                            .endHandler(done -> {
+                                                event.result().close();
+                                                handler.handle(Util.result(true, new SendDocument().setDocument(book.getAbsolutePath()).setCaption("book"), null));
+                                            })
+                                            .exceptionHandler(e -> handler.handle(Util.result(false, null, e))),
+                                    event.result())
+                                    .start();
                         } else {
-                            handler.handle(Util.result(false, null, entry.cause()));
+                            handler.handle(Util.result(false, null, event.cause()));
                         }
                     });
                 } catch (Exception e) {
                     handler.handle(Util.result(false, null, e));
                 }
             }
-        }).exceptionHandler(e -> {
-            handler.handle(Util.result(false, null, e));
-        });
+        }).exceptionHandler(e -> handler.handle(Util.result(false, null, e)));
     }
 }

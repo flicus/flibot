@@ -35,7 +35,7 @@ import org.schors.vertx.telegram.bot.commands.CommandContext;
 
 import java.io.File;
 
-@BotCommand(regexp = "^/d")
+@BotCommand(message = "^/d")
 public class DownloadCommand extends FlibotCommand {
 
     private FileNameParser fileNameParser = new FileNameParser();
@@ -94,6 +94,7 @@ public class DownloadCommand extends FlibotCommand {
     public void execute(CommandContext context, Handler<Boolean> handler) {
         String text = context.getUpdate().getMessage().getText();
         String url = getCache().getIfPresent(Util.normalizeCmd(text));
+        context.put("text", text);
         if (url != null) {
             download(url, event -> {
                 if (event.succeeded()) {

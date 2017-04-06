@@ -29,7 +29,7 @@ import org.schors.flibot.Util;
 import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
-@BotCommand(regexp = "^/c")
+@BotCommand(message = "^/c")
 public class GetCmdCommand extends FlibotCommand {
 
     public GetCmdCommand() {

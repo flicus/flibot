@@ -28,7 +28,7 @@ import org.schors.flibot.Util;
 import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
-@BotCommand(regexp = "^/u")
+@BotCommand(message = "^/u")
 public class UnregisterUserCommand extends FlibotCommand {
 
     public UnregisterUserCommand() {

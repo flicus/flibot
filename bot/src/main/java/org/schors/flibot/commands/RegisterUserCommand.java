@@ -28,7 +28,7 @@ import org.schors.flibot.Util;
 import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
-@BotCommand(regexp = "^/r")
+@BotCommand(message = "^/r")
 public class RegisterUserCommand extends FlibotCommand {
 
     public RegisterUserCommand() {
