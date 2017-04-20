@@ -23,18 +23,15 @@
 
 package org.schors.flibot.commands;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import io.vertx.core.file.OpenOptions;
-import io.vertx.core.streams.Pump;
 import org.schors.flibot.Util;
 import org.schors.vertx.telegram.bot.api.methods.AnswerInlineQuery;
-import org.schors.vertx.telegram.bot.api.methods.SendDocument;
+import org.schors.vertx.telegram.bot.api.types.InputTextMessageContent;
 import org.schors.vertx.telegram.bot.api.types.inline.InlineQueryResult;
+import org.schors.vertx.telegram.bot.api.types.inline.InlineQueryResultArticle;
+import org.schors.vertx.telegram.bot.api.util.ParseMode;
 import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
-
-import java.io.File;
 
 @BotCommand(inline = "^share")
 public class ShareInlineCommand extends FlibotCommand {
@@ -45,45 +42,21 @@ public class ShareInlineCommand extends FlibotCommand {
         String url = getCache().getIfPresent(Util.normalizeCmd(text));
 
         if (url != null) {
-            download(url, event -> {
-                if (event.succeeded()) {
-                    sendInlineAnswer(new AnswerInlineQuery().setResults(new InlineQueryResult[]{new}));
-                    sendFile(context, (SendDocument) event.result());
-                    handler.handle(Boolean.TRUE);
-                } else {
-                    sendReply(context, "Error happened :(");
-                    handler.handle(Boolean.FALSE);
-                }
-            });
+            sendInlineAnswer(context, new AnswerInlineQuery()
+                    .setResults(
+                            new InlineQueryResult[]{
+                                    new InlineQueryResultArticle()
+                                            .setId(Long.toHexString(System.currentTimeMillis()))
+                                            .setTitle("title")
+                                            .setInputMessageContent(
+                                            new InputTextMessageContent()
+                                                    .setDisableWebPagePreview(true)
+                                                    .setParseMode(ParseMode.html)
+                                                    .setMessageText("text"))}));
+            handler.handle(Boolean.TRUE);
         } else {
             sendReply(context, "Expired command");
             handler.handle(Boolean.FALSE);
         }
-    }
-
-    private void download(String url, Handler<AsyncResult<Object>> handler) {
-        getClient().get(url, res -> {
-            if (res.statusCode() == 200) {
-                try {
-                    File book = File.createTempFile(fileNameParser.parse(url), null);
-                    getBot().getVertx().fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), event -> {
-                        if (event.succeeded()) {
-                            Pump.pump(res
-                                            .endHandler(done -> {
-                                                event.result().close();
-                                                handler.handle(Util.result(true, new SendDocument().setDocument(book.getAbsolutePath()).setCaption("book"), null));
-                                            })
-                                            .exceptionHandler(e -> handler.handle(Util.result(false, null, e))),
-                                    event.result())
-                                    .start();
-                        } else {
-                            handler.handle(Util.result(false, null, event.cause()));
-                        }
-                    });
-                } catch (Exception e) {
-                    handler.handle(Util.result(false, null, e));
-                }
-            }
-        }).exceptionHandler(e -> handler.handle(Util.result(false, null, e)));
     }
 }

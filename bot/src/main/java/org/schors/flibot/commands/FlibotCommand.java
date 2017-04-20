@@ -35,7 +35,10 @@ import org.schors.vertx.telegram.bot.api.methods.AnswerInlineQuery;
 import org.schors.vertx.telegram.bot.api.methods.SendChatAction;
 import org.schors.vertx.telegram.bot.api.methods.SendDocument;
 import org.schors.vertx.telegram.bot.api.methods.SendMessage;
-import org.schors.vertx.telegram.bot.api.types.*;
+import org.schors.vertx.telegram.bot.api.types.Action;
+import org.schors.vertx.telegram.bot.api.types.InlineKeyboardButton;
+import org.schors.vertx.telegram.bot.api.types.InlineKeyboardMarkup;
+import org.schors.vertx.telegram.bot.api.types.Update;
 import org.schors.vertx.telegram.bot.api.util.ParseMode;
 import org.schors.vertx.telegram.bot.commands.Command;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
@@ -82,31 +85,23 @@ public abstract class FlibotCommand extends Command {
         getBot().sendMessage(res);
     }
 
-    protected Message sendReply(CommandContext context, SendMessageList res) {
-        Message result = null;
+    protected void sendReply(CommandContext context, SendMessageList res) {
         for (SendMessage sm : res.getMessages()) {
             sm.setChatId(context.getUpdate().getMessage().getChatId());
             getBot().sendMessage(sm);
         }
-        return result;
     }
 
-    protected Message sendFile(CommandContext context, SendDocument res) {
-        Message result = null;
+    protected void sendFile(CommandContext context, SendDocument res) {
         getBot().sendDocument(res
                 .setChatId(context.getUpdate().getMessage().getChatId())
                 .setReplyMarkup(new InlineKeyboardMarkup(new InlineKeyboardButton[][]{{new InlineKeyboardButton()
                         .setText("Share")
-                        .setSwitchInlineQuery("share_" + context.get("text"))}})), event -> {
-            event.succeeded();
-
-        });
-
-        return result;
+                        .setSwitchInlineQuery("share_" + context.get("text"))}})));
     }
 
-    protected Message sendInlineAnswer(CommandContext, AnswerInlineQuery query) {
-
+    protected void sendInlineAnswer(CommandContext context, AnswerInlineQuery query) {
+        getBot().sendAnswerInlineQuery(query);
     }
 
     protected void sendBusy(Update update) {
