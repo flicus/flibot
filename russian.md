@@ -1,9 +1,9 @@
 # Telegam bot for Flibusta [![Build Status](https://travis-ci.org/flicus/flibot.png)](https://travis-ci.org/flicus/flibot)
-Бот позволяет искать и скачивать книги из онлайн библиотеки [Flibusta] (http://www.flibusta.is). Использует [TOR] (https://www.torproject.org) для доступа к [OPDS] (https://ru.wikipedia.org/wiki/OPDS) каталогу Флибусты. Использует библиотеку [Telegram Bot API] (https://github.com/rubenlagus/TelegramBots). Отвечает только администратору бота и пользователям, которых администратор добавил в список разрешенных.
+Бот позволяет искать и скачивать книги из онлайн библиотеки [Flibusta](http://www.flibusta.is). Использует [TOR](https://www.torproject.org) для доступа к [OPDS](https://ru.wikipedia.org/wiki/OPDS) каталогу Флибусты. Использует библиотеку [Telegram Bot API](https://github.com/rubenlagus/TelegramBots). Отвечает только администратору бота и пользователям, которых администратор добавил в список разрешенных.
 ## Установка
 Для начала убедитесь что на хосте установлен tor. Так же боту для запуска нужна установленая Java 8. Установить бота на хост можно несколькими способами:
 ### Установка из исходных кодов
-Установите [Git] (https://git-scm.com/) если его еще нет , после чего клонируйте репозиторий бота к себе на хост:
+Установите [Git](https://git-scm.com/) если его еще нет , после чего клонируйте репозиторий бота к себе на хост:
 ```
 git clone https://github.com/flicus/flibot
 ```
