@@ -1,5 +1,5 @@
 # Telegam bot for Flibusta [![Build Status](https://travis-ci.org/flicus/flibot.png)](https://travis-ci.org/flicus/flibot)
-[Русская] (https://github.com/flicus/flibot/blob/master/russian.md) версия здесь
+[Русская](https://github.com/flicus/flibot/blob/master/russian.md) версия здесь
 
 Allows to search, browse and download books from [Flibusta](http://www.flibusta.is) library. Uses [TOR](https://www.torproject.org) to connect to Flibusta hidden service. Uses [Telegram Bot API](https://github.com/rubenlagus/TelegramBots). Respond only to the bot admin or telegram users which are allowed by the bot admin.
 ## Installation
