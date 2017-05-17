@@ -1,7 +1,8 @@
 /*
  *  The MIT License (MIT)
  *
- *  Copyright (c) 2016 schors
+ *  Copyright (c) 2017  schors
+ *
  *   Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
@@ -34,6 +35,7 @@ import org.apache.log4j.Logger;
 import org.schors.vertx.telegram.bot.LongPollingReceiver;
 import org.schors.vertx.telegram.bot.TelegramBot;
 import org.schors.vertx.telegram.bot.TelegramOptions;
+import org.schors.vertx.telegram.bot.commands.CommandHandler;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,9 +86,11 @@ public class FliBot extends AbstractVerticle {
                 .setProxyOptions(new ProxyOptions().setType(ProxyType.HTTP).setPort(8080).setHost("genproxy"));
 
 
-        TelegramBot bot = TelegramBot.create(vertx, telegramOptions)
-                .receiver(new LongPollingReceiver())
-                .useCommandManager("org.schors.flibot")
+        TelegramBot bot = TelegramBot.create(vertx, telegramOptions);
+        bot
+                .receiver(new LongPollingReceiver()
+                        .onUpdate(new CommandHandler(bot)
+                                .loadCommands("org.schors.flibot")))
                 .addFacility(Util.HTTP_CLIENT, httpclient)
                 .addFacility(Util.CACHE, urlCache)
                 .addFacility(Util.SEARCHES, searches)
