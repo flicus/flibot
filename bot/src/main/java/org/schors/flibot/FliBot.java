@@ -34,6 +34,7 @@ import org.apache.log4j.Logger;
 import org.schors.vertx.telegram.bot.LongPollingReceiver;
 import org.schors.vertx.telegram.bot.TelegramBot;
 import org.schors.vertx.telegram.bot.TelegramOptions;
+import org.schors.vertx.telegram.bot.commands.CommandHandler;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,12 +82,11 @@ public class FliBot extends AbstractVerticle {
         TelegramOptions telegramOptions = new TelegramOptions()
                 .setBotName(config().getString("name"))
                 .setBotToken(config().getString("token"))
+                .setCommandPackage("org.schors.flibot")
                 .setProxyOptions(new ProxyOptions().setType(ProxyType.HTTP).setPort(8080).setHost("genproxy"));
 
-
         TelegramBot bot = TelegramBot.create(vertx, telegramOptions)
-                .receiver(new LongPollingReceiver())
-                .useCommandManager("org.schors.flibot")
+                .receiver(new LongPollingReceiver().onUpdate(new CommandHandler().loadCommands()))
                 .addFacility(Util.HTTP_CLIENT, httpclient)
                 .addFacility(Util.CACHE, urlCache)
                 .addFacility(Util.SEARCHES, searches)

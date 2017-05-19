@@ -31,13 +31,10 @@ import io.vertx.core.json.JsonObject;
 import org.schors.flibot.*;
 import org.schors.flibot.opds.Page;
 import org.schors.flibot.opds.PageParser;
-import org.schors.vertx.telegram.bot.api.methods.AnswerInlineQuery;
 import org.schors.vertx.telegram.bot.api.methods.SendChatAction;
 import org.schors.vertx.telegram.bot.api.methods.SendDocument;
 import org.schors.vertx.telegram.bot.api.methods.SendMessage;
 import org.schors.vertx.telegram.bot.api.types.Action;
-import org.schors.vertx.telegram.bot.api.types.InlineKeyboardButton;
-import org.schors.vertx.telegram.bot.api.types.InlineKeyboardMarkup;
 import org.schors.vertx.telegram.bot.api.types.Update;
 import org.schors.vertx.telegram.bot.api.util.ParseMode;
 import org.schors.vertx.telegram.bot.commands.Command;
@@ -95,14 +92,15 @@ public abstract class FlibotCommand extends Command {
     protected void sendFile(CommandContext context, SendDocument res) {
         getBot().sendDocument(res
                 .setChatId(context.getUpdate().getMessage().getChatId())
-                .setReplyMarkup(new InlineKeyboardMarkup(new InlineKeyboardButton[][]{{new InlineKeyboardButton()
-                        .setText("Share")
-                        .setSwitchInlineQuery("share_" + context.get("text"))}})));
+//                .setReplyMarkup(new InlineKeyboardMarkup(new InlineKeyboardButton[][]{{new InlineKeyboardButton()
+//                        .setText("Share")
+//                        .setSwitchInlineQuery("share_" + context.get("text"))}}))
+        );
     }
 
-    protected void sendInlineAnswer(CommandContext context, AnswerInlineQuery query) {
-        getBot().sendAnswerInlineQuery(query);
-    }
+//    protected void sendInlineAnswer(CommandContext context, AnswerInlineQuery query) {
+//        getBot().sendAnswerInlineQuery(query);
+//    }
 
     protected void sendBusy(Update update) {
         getBot().sendChatAction(new SendChatAction()
