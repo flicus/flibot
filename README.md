@@ -1,4 +1,5 @@
 # Telegam bot for Flibusta [![Build Status](https://travis-ci.org/flicus/flibot.png)](https://travis-ci.org/flicus/flibot)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fflicus%2Fflibot.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fflicus%2Fflibot?ref=badge_shield)
 [Русская](https://github.com/flicus/flibot/blob/master/russian.md) версия здесь
 
 Allows to search, browse and download books from [Flibusta](http://www.flibusta.is) library. Uses [TOR](https://www.torproject.org) to connect to Flibusta hidden service. Uses [Telegram Bot API](https://github.com/rubenlagus/TelegramBots). Respond only to the bot admin or telegram users which are allowed by the bot admin.
@@ -47,3 +48,6 @@ Just type your favorite author name or book title in the chat, bot will ask wher
 /r <username>       - add username to the allowed list (available only to the bot admin)
 /u <username>       - remove username from the allowed list (available only to the bot admin)
 ```
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fflicus%2Fflibot.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fflicus%2Fflibot?ref=badge_large)
