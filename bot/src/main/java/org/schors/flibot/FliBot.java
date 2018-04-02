@@ -29,6 +29,8 @@ import io.vertx.core.Handler;
 import jersey.repackaged.com.google.common.cache.Cache;
 import jersey.repackaged.com.google.common.cache.CacheBuilder;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
@@ -43,6 +45,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.log4j.Logger;
+import org.telegram.telegrambots.ApiContext;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.ActionType;
@@ -54,6 +57,7 @@ import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
@@ -142,6 +146,7 @@ public class FliBot extends AbstractVerticle {
     public void start() {
 
         ApiContextInitializer.init();
+        DefaultBotOptions botOptions = ApiContext.getInstance(DefaultBotOptions.class);
 
         telegram = new TelegramBotsApi();
         context = HttpClientContext.create();
@@ -159,6 +164,9 @@ public class FliBot extends AbstractVerticle {
                     .register("https", new MySSLConnectionSocketFactory(SSLContexts.createSystemDefault())).build();
             PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg, new FakeDNSResolver());
             httpclient = HttpClients.custom().setConnectionManager(cm).build();
+            HttpHost proxy = new HttpHost(config().getString("torhost"), Integer.valueOf(config().getString("torport")));
+            RequestConfig requestConfig = RequestConfig.custom().setProxy(proxy).build();
+            botOptions.setRequestConfig(requestConfig);
         } else {
             rootOPDS = rootOPDShttp;
             httpclient = HttpClientBuilder.create()
@@ -169,7 +177,7 @@ public class FliBot extends AbstractVerticle {
         }
 
         try {
-            telegram.registerBot(new TelegramLongPollingBot() {
+            telegram.registerBot(new TelegramLongPollingBot(botOptions) {
 
                 private void sendReply(Update update, String res) {
                     Message result = null;
