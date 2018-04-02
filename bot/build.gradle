@@ -28,7 +28,7 @@ dependencies {
     compile "org.json:json:20151123"
     compile "org.apache.httpcomponents:httpclient:4.5.1"
     compile "org.apache.httpcomponents:httpmime:4.5.1"
-    compile 'org.telegram:telegrambots:2.4.0'
+    compile 'org.telegram:telegrambots:3.6'
     compile 'org.jdom:jdom2:2.0.6'
     compile 'com.google.guava:guava:19.0'
 }
