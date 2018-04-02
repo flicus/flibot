@@ -198,11 +198,13 @@ public class FliBot extends AbstractVerticle {
                 private Message sendReply(Update update, SendMessageList res) {
                     Message result = null;
                     for (SendMessage sm : res.getMessages()) {
-                        sm.setChatId(String.valueOf(update.getMessage().getChatId()));
-                        try {
-                            result = sendMessage(sm);
-                        } catch (TelegramApiException e) {
-                            log.error(e, e);
+                        if (sm.getText() != null && sm.getText().length() > 0) {
+                            sm.setChatId(String.valueOf(update.getMessage().getChatId()));
+                            try {
+                                result = sendMessage(sm);
+                            } catch (TelegramApiException e) {
+                                log.error(e, e);
+                            }
                         }
                     }
                     return result;
