@@ -69,10 +69,10 @@ subprojects {
         maven { url "https://jitpack.io" }
     }
 
-    version = "0.9.2"
+    version = "0.9.3"
 
     dependencies {
         compile "log4j:log4j:1.2.17"
-        compile "io.vertx:vertx-core:3.4.1"
+        compile "io.vertx:vertx-core:3.5.1"
     }
 }

@@ -28,8 +28,8 @@ import io.vertx.core.Handler;
 import org.schors.flibot.Search;
 import org.schors.flibot.SendMessageList;
 import org.schors.vertx.telegram.bot.api.methods.SendMessage;
-import org.schors.vertx.telegram.bot.api.types.KeyboardButton;
-import org.schors.vertx.telegram.bot.api.types.ReplyKeyboardMarkup;
+import org.schors.vertx.telegram.bot.api.types.keyboard.KeyboardButton;
+import org.schors.vertx.telegram.bot.api.types.keyboard.ReplyKeyboardMarkup;
 import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
