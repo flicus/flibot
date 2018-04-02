@@ -43,6 +43,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.log4j.Logger;
+import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.ActionType;
 import org.telegram.telegrambots.api.methods.send.SendChatAction;
@@ -139,6 +140,8 @@ public class FliBot extends AbstractVerticle {
 
     @Override
     public void start() {
+
+        ApiContextInitializer.init();
 
         telegram = new TelegramBotsApi();
         context = HttpClientContext.create();
