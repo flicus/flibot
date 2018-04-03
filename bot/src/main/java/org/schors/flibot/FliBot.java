@@ -66,7 +66,7 @@ public class FliBot extends AbstractVerticle {
                 .setTrustAll(true)
                 .setIdleTimeout(50)
                 .setMaxPoolSize(100)
-                .setDefaultHost(/*usetor ? rootOPDStor : */rootOPDShttp)
+                .setDefaultHost(usetor ? rootOPDStor : rootOPDShttp)
                 .setDefaultPort(80)
                 .setLogActivity(true);
 
