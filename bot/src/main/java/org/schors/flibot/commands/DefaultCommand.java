@@ -25,6 +25,7 @@ package org.schors.flibot.commands;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
+import org.apache.log4j.Logger;
 import org.schors.flibot.Search;
 import org.schors.flibot.SendMessageList;
 import org.schors.vertx.telegram.bot.api.methods.SendMessage;
@@ -35,6 +36,8 @@ import org.schors.vertx.telegram.bot.commands.CommandContext;
 
 @BotCommand(isDefault = true)
 public class DefaultCommand extends FlibotCommand {
+
+    private static final Logger log = Logger.getLogger(DefaultCommand.class);
 
     public DefaultCommand() {
     }
@@ -54,6 +57,7 @@ public class DefaultCommand extends FlibotCommand {
                             handler.handle(Boolean.TRUE);
                         } else {
                             sendReply(context, "Error happened :(");
+                            log.warn(event.cause(), event.cause());
                             handler.handle(Boolean.FALSE);
                         }
                     });
