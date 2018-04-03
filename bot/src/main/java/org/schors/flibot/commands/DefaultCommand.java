@@ -44,7 +44,7 @@ public class DefaultCommand extends FlibotCommand {
         String userName = context.getUpdate().getMessage().getFrom().getUsername();
         String text = context.getUpdate().getMessage().getText();
         Search search = getSearches().get(userName);
-        if (search != null) {
+        if (search != null && search.getSearchType() != null) {
             getSearches().remove(userName);
             switch (search.getSearchType()) {
                 case AUTHOR: {
@@ -84,9 +84,9 @@ public class DefaultCommand extends FlibotCommand {
             ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
             keyboardMarkup.setKeyboard(keyboardRows);
             keyboardMarkup.setResizeKeyboard(true);
-            keyboardMarkup.setSelective(true);
+            keyboardMarkup.setSelective(false);
             SendMessage sendMessage = new SendMessage();
-            sendMessage.setChatId(context.getUpdate().getMessage().getChatId());
+//            sendMessage.setChatId(context.getUpdate().getMessage().getChatId());
             sendMessage.setReplyMarkup(keyboardMarkup);
             sendMessage.setText("What to search, author or book?");
             sendReply(context, sendMessage);

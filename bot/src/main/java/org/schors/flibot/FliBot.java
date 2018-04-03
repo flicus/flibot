@@ -82,11 +82,17 @@ public class FliBot extends AbstractVerticle {
         TelegramOptions telegramOptions = new TelegramOptions()
                 .setBotName(config().getString("name"))
                 .setBotToken(config().getString("token"))
-                .setCommandPackage("org.schors.flibot")
-                .setProxyOptions(new ProxyOptions().setType(ProxyType.HTTP).setPort(8080).setHost("genproxy"));
+                .setCommandPackage("org.schors.flibot");
+//                .setProxyOptions(new ProxyOptions().setType(ProxyType.HTTP).setPort(8080).setHost("genproxy"));
 
-        TelegramBot bot = TelegramBot.create(vertx, telegramOptions)
-                .receiver(new LongPollingReceiver().onUpdate(new CommandHandler().loadCommands()))
+        TelegramBot bot = TelegramBot.create(vertx, telegramOptions);
+        LongPollingReceiver receiver = new LongPollingReceiver();
+        bot.receiver(receiver);
+        CommandHandler handler = new CommandHandler();
+        receiver.onUpdate(handler);
+        handler.loadCommands();
+        bot
+
                 .addFacility(Util.HTTP_CLIENT, httpclient)
                 .addFacility(Util.CACHE, urlCache)
                 .addFacility(Util.SEARCHES, searches)
