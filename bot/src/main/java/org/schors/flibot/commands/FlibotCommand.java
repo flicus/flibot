@@ -40,6 +40,7 @@ import org.schors.vertx.telegram.bot.api.util.ParseMode;
 import org.schors.vertx.telegram.bot.commands.Command;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
+import java.io.ByteArrayInputStream;
 import java.util.Map;
 
 public abstract class FlibotCommand extends Command {
@@ -114,7 +115,8 @@ public abstract class FlibotCommand extends Command {
             if (event.statusCode() == 200) {
                 event
                         .bodyHandler(buffer -> {
-                            Page page = PageParser.parse(new VertxBufferInputStream(buffer));
+//                            Page page = PageParser.parse(new VertxBufferInputStream(buffer));
+                            Page page = PageParser.parse(new ByteArrayInputStream(buffer.getBytes()));
                             if (page.getEntries() != null && page.getEntries().size() > 0) {
                                 if (page.getTitle() != null) {
                                     result.append("<b>").append(page.getTitle()).append("</b>\n");
