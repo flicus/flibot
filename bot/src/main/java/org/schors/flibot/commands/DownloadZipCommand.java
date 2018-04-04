@@ -47,6 +47,7 @@ public class DownloadZipCommand extends FlibotCommand {
 
     @Override
     public void execute(CommandContext context, Handler<Boolean> handler) {
+        log.warn("## Download unzip command executing: " + context.getUpdate());
         String text = context.getUpdate().getMessage().getText();
         String url = getCache().getIfPresent(Util.normalizeCmd(text));
         if (url != null) {

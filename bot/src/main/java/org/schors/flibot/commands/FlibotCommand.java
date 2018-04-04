@@ -28,6 +28,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
+import org.apache.log4j.Logger;
 import org.schors.flibot.*;
 import org.schors.flibot.opds.Page;
 import org.schors.flibot.opds.PageParser;
@@ -44,6 +45,8 @@ import java.io.ByteArrayInputStream;
 import java.util.Map;
 
 public abstract class FlibotCommand extends Command {
+
+    public static final Logger log = Logger.getLogger(FlibotCommand.class);
 
     public static final String authorSearch = "/search?searchType=authors&searchTerm=%s";
     public static final String bookSearch = "/search?searchType=books&searchTerm=%s";

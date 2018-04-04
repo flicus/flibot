@@ -36,6 +36,7 @@ public class UnregisterUserCommand extends FlibotCommand {
 
     @Override
     public void execute(CommandContext context, Handler<Boolean> handler) {
+        log.warn("## Unregister user command executing: " + context.getUpdate());
         String text = context.getUpdate().getMessage().getText();
         String userName = context.getUpdate().getMessage().getFrom().getUsername();
         if (userName.equals(getConfig().getString("admin"))) {

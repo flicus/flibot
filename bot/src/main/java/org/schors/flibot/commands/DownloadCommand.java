@@ -92,6 +92,7 @@ public class DownloadCommand extends FlibotCommand {
 
     @Override
     public void execute(CommandContext context, Handler<Boolean> handler) {
+        log.warn("## Download command executing: " + context.getUpdate());
         String text = context.getUpdate().getMessage().getText();
         String url = getCache().getIfPresent(Util.normalizeCmd(text));
         context.put("text", text);

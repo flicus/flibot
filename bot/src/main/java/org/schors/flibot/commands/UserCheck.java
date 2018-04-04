@@ -24,21 +24,19 @@
 package org.schors.flibot.commands;
 
 import io.vertx.core.Handler;
-import org.schors.flibot.Storage;
-import org.schors.flibot.Util;
 import org.schors.vertx.telegram.bot.commands.BotCommand;
-import org.schors.vertx.telegram.bot.commands.Command;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
 @BotCommand(isPreExecute = true)
-public class UserCheck extends Command {
+public class UserCheck extends FlibotCommand {
 
-    private Storage getDB() {
-        return (Storage) getBot().getFacility(Util.DB);
-    }
+//    private Storage getDB() {
+//        return (Storage) getBot().getFacility(Util.DB);
+//    }
 
     @Override
     public void execute(CommandContext context, Handler<Boolean> handler) {
+        log.warn("## User check command executing: " + context.getUpdate());
         String userName = context.getUpdate().getMessage().getFrom().getUsername();
         if (!getDB().isRegisteredUser(userName)) {
             sendReply(context, "I do not talk to strangers");

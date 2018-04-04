@@ -38,6 +38,7 @@ public class GetAuthorCommand extends FlibotCommand {
 
     @Override
     public void execute(CommandContext context, Handler<Boolean> handler) {
+        log.warn("## Get author command executing: " + context.getUpdate());
         String userName = context.getUpdate().getMessage().getFrom().getUsername();
         Search search = getSearches().get(userName);
         if (search != null) {

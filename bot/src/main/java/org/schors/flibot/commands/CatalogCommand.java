@@ -37,6 +37,7 @@ public class CatalogCommand extends FlibotCommand {
 
     @Override
     public void execute(CommandContext context, Handler<Boolean> handler) {
+        log.warn("### Catalog command executing: " + context.getUpdate());
         catalog(event -> {
             if (event.succeeded()) {
                 sendReply(context, (SendMessageList) event.result());

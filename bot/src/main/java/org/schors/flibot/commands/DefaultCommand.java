@@ -25,7 +25,6 @@ package org.schors.flibot.commands;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import org.apache.log4j.Logger;
 import org.schors.flibot.Search;
 import org.schors.flibot.SendMessageList;
 import org.schors.vertx.telegram.bot.api.methods.SendMessage;
@@ -37,13 +36,12 @@ import org.schors.vertx.telegram.bot.commands.CommandContext;
 @BotCommand(isDefault = true)
 public class DefaultCommand extends FlibotCommand {
 
-    private static final Logger log = Logger.getLogger(DefaultCommand.class);
-
     public DefaultCommand() {
     }
 
     @Override
     public void execute(CommandContext context, Handler<Boolean> handler) {
+        log.warn("### Default command executing: " + context.getUpdate());
         String userName = context.getUpdate().getMessage().getFrom().getUsername();
         String text = context.getUpdate().getMessage().getText();
         Search search = getSearches().get(userName);
