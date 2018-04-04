@@ -28,13 +28,15 @@ import io.vertx.core.Handler;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.streams.Pump;
 import org.schors.flibot.Util;
-import org.schors.flibot.VxZipInputStream;
 import org.schors.vertx.telegram.bot.api.methods.SendDocument;
 import org.schors.vertx.telegram.bot.commands.BotCommand;
 import org.schors.vertx.telegram.bot.commands.CommandContext;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 @BotCommand(message = "^/z")
 public class DownloadZipCommand extends FlibotCommand {
@@ -63,7 +65,7 @@ public class DownloadZipCommand extends FlibotCommand {
         }
     }
 
-    private void downloadz(String url, Handler<AsyncResult<Object>> handler) {
+    /*private void downloadz(String url, Handler<AsyncResult<Object>> handler) {
         getClient().get(url, res -> {
             if (res.statusCode() == 200) {
                 try {
@@ -98,5 +100,59 @@ public class DownloadZipCommand extends FlibotCommand {
         }).exceptionHandler(e -> {
             handler.handle(Util.result(false, null, e));
         });
+    }*/
+
+    private void downloadz(String url, Handler<AsyncResult<Object>> handler) {
+        getClient().get(url, res -> {
+            if (res.statusCode() == 200) {
+                try {
+                    File book = File.createTempFile("flibot_" + Long.toHexString(System.currentTimeMillis()), null);
+                    getBot().getVertx().fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), event -> {
+                        if (event.succeeded()) {
+                            Pump.pump(res
+                                            .endHandler(done -> {
+                                                event.result().close();
+                                                getBot().getVertx().executeBlocking(future -> {
+                                                    try {
+                                                        ZipInputStream zip = new ZipInputStream(new FileInputStream(book));
+                                                        ZipEntry entry = zip.getNextEntry();
+                                                        File book2 = File.createTempFile("fbunzip_" + Long.toHexString(System.currentTimeMillis()), null);
+
+                                                        byte[] buffer = new byte[2048];
+                                                        FileOutputStream fileOutputStream = new FileOutputStream(book2);
+                                                        int len = 0;
+                                                        while ((len = zip.read(buffer)) > 0) {
+                                                            fileOutputStream.write(buffer, 0, len);
+                                                        }
+                                                        fileOutputStream.close();
+                                                        zip.close();
+                                                        final SendDocument sendDocument = new SendDocument();
+                                                        sendDocument.setDocument(book2.getAbsolutePath());
+                                                        sendDocument.setCaption(entry.getName());
+                                                        future.complete(sendDocument);
+
+                                                    } catch (Exception e) {
+                                                        future.fail(e);
+                                                    }
+                                                }, result -> {
+                                                    handler.handle(result);
+                                                });
+//                                                handler.handle(Util.result(true, new SendDocument().setDocument(book.getAbsolutePath()).setCaption("book"), null));
+                                            })
+                                            .exceptionHandler(e -> handler.handle(Util.result(false, null, e))),
+                                    event.result())
+                                    .start();
+                        } else {
+                            handler.handle(Util.result(false, null, event.cause()));
+                        }
+                    });
+                } catch (Exception e) {
+                    handler.handle(Util.result(false, null, e));
+                }
+            }
+        }).exceptionHandler(event -> {
+            handler.handle(Util.result(false, null, event));
+        });
+
     }
 }
