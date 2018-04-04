@@ -35,7 +35,7 @@ import org.schors.vertx.telegram.bot.commands.CommandContext;
 
 import java.io.File;
 
-@BotCommand(message = "^/d")
+@BotCommand(message = "^/d.+")
 public class DownloadCommand extends FlibotCommand {
 
     private FileNameParser fileNameParser = new FileNameParser();

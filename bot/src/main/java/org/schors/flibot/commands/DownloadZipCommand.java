@@ -38,7 +38,7 @@ import java.io.FileOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-@BotCommand(message = "^/z")
+@BotCommand(message = "^/z.+")
 public class DownloadZipCommand extends FlibotCommand {
 
     public DownloadZipCommand() {
