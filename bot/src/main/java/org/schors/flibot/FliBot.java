@@ -73,7 +73,7 @@ public class FliBot extends AbstractVerticle {
         if (usetor) {
             httpOptions
                     .setProxyOptions(new ProxyOptions()
-                            .setType(ProxyType.HTTP)
+                            .setType(ProxyType.SOCKS4)
                             .setHost(config().getString("torhost"))
                             .setPort(Integer.valueOf(config().getString("torport"))));
         }

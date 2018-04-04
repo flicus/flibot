@@ -45,6 +45,9 @@ public class PageParser {
 
     public static Page parse(InputStream input) {
         SAXBuilder parser = new SAXBuilder();
+        parser.setIgnoringBoundaryWhitespace(true);
+        parser.setIgnoringElementContentWhitespace(true);
+        parser.setValidation(false);
         Document xmlDoc = null;
         final Page page = new Page();
         try {
