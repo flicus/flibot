@@ -153,7 +153,7 @@ public class DownloadZipCommand extends FlibotCommand {
             }
         }).exceptionHandler(event -> {
             handler.handle(Util.result(false, null, event));
-        });
+        }).setFollowRedirects(true).end();
 
     }
 }

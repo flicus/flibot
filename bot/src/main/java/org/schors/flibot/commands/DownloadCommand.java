@@ -122,7 +122,7 @@ public class DownloadCommand extends FlibotCommand {
                             Pump.pump(res
                                             .endHandler(done -> {
                                                 event.result().close();
-                                                handler.handle(Util.result(true, new SendDocument().setDocument(book.getAbsolutePath()).setCaption("book"), null));
+                                                handler.handle(Util.result(true, new SendDocument().setLocalFilePath(book.getAbsolutePath()).setCaption(book.getName()), null));
                                             })
                                             .exceptionHandler(e -> handler.handle(Util.result(false, null, e))),
                                     event.result())
@@ -135,7 +135,9 @@ public class DownloadCommand extends FlibotCommand {
                     handler.handle(Util.result(false, null, e));
                 }
             }
-        }).exceptionHandler(e -> handler.handle(Util.result(false, null, e)));
+        }).exceptionHandler(e -> {
+            handler.handle(Util.result(false, null, e));
+        }).setFollowRedirects(true).end();
     }
 
     /*    private void download(String url, Handler<AsyncResult<Object>> handler) {
