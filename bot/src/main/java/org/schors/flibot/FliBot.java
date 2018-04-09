@@ -29,7 +29,6 @@ import io.vertx.core.Handler;
 import jersey.repackaged.com.google.common.cache.Cache;
 import jersey.repackaged.com.google.common.cache.CacheBuilder;
 import org.apache.http.HttpEntity;
-import org.apache.http.client.RedirectStrategy;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
@@ -59,9 +58,7 @@ import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -497,9 +494,15 @@ public class FliBot extends AbstractVerticle {
         try {
             CloseableHttpResponse response = httpclient.execute(httpGet, context);
             if (response.getStatusLine().getStatusCode() == 200) {
-                HttpEntity ht = response.getEntity();
-                BufferedHttpEntity buf = new BufferedHttpEntity(ht);
-                Page page = PageParser.parse(buf.getContent());
+                ByteArrayOutputStream data = new ByteArrayOutputStream();
+                response.getEntity().writeTo(data);
+                byte[] bytes = data.toByteArray();
+                String sss = new String(bytes);
+                log.warn(sss);
+//                HttpEntity ht = response.getEntity();
+//                BufferedHttpEntity buf = new BufferedHttpEntity(ht);
+//                Page page = PageParser.parse(buf.getContent());
+                Page page = PageParser.parse(new ByteArrayInputStream(bytes));
                 if (page.getEntries() != null && page.getEntries().size() > 0) {
                     if (page.getTitle() != null) {
                         result.append("<b>").append(page.getTitle()).append("</b>\n");
