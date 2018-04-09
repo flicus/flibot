@@ -510,6 +510,7 @@ public class FliBot extends AbstractVerticle {
     protected void doGenericRequest(String url, Handler<AsyncResult<Object>> handler) {
         SendMessageList result = new SendMessageList(4096);
         httpclient.get(url, event -> {
+            log.info("URI: " + event.request().absoluteURI());
             log.info(String.format("onGenericReq: RC=%d, MSG=%s", event.statusCode(), event.statusMessage()));
             if (event.statusCode() == 200) {
                 event
