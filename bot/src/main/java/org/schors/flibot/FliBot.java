@@ -27,17 +27,15 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.file.OpenOptions;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.net.ProxyOptions;
 import io.vertx.core.net.ProxyType;
+import io.vertx.core.streams.Pump;
 import jersey.repackaged.com.google.common.cache.Cache;
 import jersey.repackaged.com.google.common.cache.CacheBuilder;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.log4j.Logger;
 import org.telegram.telegrambots.ApiContext;
 import org.telegram.telegrambots.ApiContextInitializer;
@@ -390,73 +388,93 @@ public class FliBot extends AbstractVerticle {
     }
 
     private void downloadz(String url, Handler<AsyncResult<Object>> handler) {
-        vertx.executeBlocking(future -> {
-            HttpGet httpGet = new HttpGet(rootOPDS + url);
-            try {
-                CloseableHttpResponse response = httpclient.execute(httpGet, context);
-                if (response.getStatusLine().getStatusCode() == 200) {
-                    HttpEntity ht = response.getEntity();
-                    ZipInputStream zip = new ZipInputStream(ht.getContent());
-                    ZipEntry entry = zip.getNextEntry();
+        httpclient.get(url, res -> {
+            if (res.statusCode() == 200) {
+                try {
                     File book = File.createTempFile("flibot_" + Long.toHexString(System.currentTimeMillis()), null);
+                    vertx.fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), event -> {
+                        if (event.succeeded()) {
+                            Pump.pump(res
+                                            .endHandler(done -> {
+                                                event.result().close();
+                                                vertx.executeBlocking(future -> {
+                                                    try {
+                                                        ZipInputStream zip = new ZipInputStream(new FileInputStream(book));
+                                                        ZipEntry entry = zip.getNextEntry();
+                                                        File book2 = File.createTempFile("fbunzip_" + Long.toHexString(System.currentTimeMillis()), null);
 
-                    byte[] buffer = new byte[2048];
-                    FileOutputStream fileOutputStream = new FileOutputStream(book);
-                    int len = 0;
-                    while ((len = zip.read(buffer)) > 0) {
-                        fileOutputStream.write(buffer, 0, len);
-                    }
-                    fileOutputStream.close();
-                    zip.close();
+                                                        byte[] buffer = new byte[2048];
+                                                        FileOutputStream fileOutputStream = new FileOutputStream(book2);
+                                                        int len = 0;
+                                                        while ((len = zip.read(buffer)) > 0) {
+                                                            fileOutputStream.write(buffer, 0, len);
+                                                        }
+                                                        fileOutputStream.close();
+                                                        zip.close();
+                                                        final SendDocument sendDocument = new SendDocument();
+                                                        sendDocument.setDocument(book2.getAbsolutePath());
+                                                        sendDocument.setCaption(entry.getName());
+                                                        future.complete(sendDocument);
 
-                    final SendDocument sendDocument = new SendDocument();
-                    sendDocument.setNewDocument(entry.getName(), new FileInputStream(book));
-                    sendDocument.setCaption("book");
-                    future.complete(sendDocument);
+                                                    } catch (Exception e) {
+                                                        future.fail(e);
+                                                    }
+                                                }, result -> {
+                                                    handler.handle(result);
+                                                });
+//                                                handler.handle(Util.result(true, new SendDocument().setDocument(book.getAbsolutePath()).setCaption("book"), null));
+                                            })
+                                            .exceptionHandler(e -> handler.handle(Future.failedFuture(e))),
+                                    event.result())
+                                    .start();
+                        } else {
+                            handler.handle(Future.failedFuture(event.cause()));
+                        }
+                    });
+                } catch (Exception e) {
+                    handler.handle(Future.failedFuture(e));
                 }
-            } catch (Exception e) {
-                log.warn(e, e);
-                future.fail(e);
             }
-        }, res -> {
-            handler.handle(res);
-        });
+        }).exceptionHandler(event -> {
+            handler.handle(Future.failedFuture(event.getCause()));
+        }).setFollowRedirects(true).end();
     }
 
     private void download(String url, Handler<AsyncResult<Object>> handler) {
-        vertx.executeBlocking(future -> {
-            HttpGet httpGet = new HttpGet(rootOPDS + url);
-            try {
-                CloseableHttpResponse response = httpclient.execute(httpGet, context);
-                if (response.getStatusLine().getStatusCode() == 200) {
-                    String fileName = fileNameParser.parse(url);
-                    HttpEntity ht = response.getEntity();
-                    BufferedHttpEntity buf = new BufferedHttpEntity(ht);
-                    File book = File.createTempFile("flibot_" + Long.toHexString(System.currentTimeMillis()), null);
-                    buf.writeTo(new FileOutputStream(book));
-                    final SendDocument sendDocument = new SendDocument();
-                    sendDocument.setNewDocument(fileName, new FileInputStream(book));
-                    sendDocument.setCaption("book");
-                    future.complete(sendDocument);
+        httpclient.get(url, res -> {
+            if (res.statusCode() == 200) {
+                try {
+                    File book = File.createTempFile(fileNameParser.parse(url), null);
+                    vertx.fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), event -> {
+                        if (event.succeeded()) {
+                            Pump.pump(res
+                                            .endHandler(done -> {
+                                                event.result().close();
+                                                handler.handle(Future.succeededFuture(
+                                                        new SendDocument()
+                                                                .setNewDocument(book)
+                                                                .setCaption(book.getName())
+                                                ));
+                                            })
+                                            .exceptionHandler(e -> handler.handle(Future.failedFuture(e))),
+                                    event.result())
+                                    .start();
+                        } else {
+                            handler.handle(Future.failedFuture(event.cause()));
+                        }
+                    });
+                } catch (Exception e) {
+                    handler.handle(Future.failedFuture(e));
                 }
-            } catch (Exception e) {
-                log.warn(e, e);
-                future.fail(e);
             }
-        }, res -> {
-            handler.handle(res);
-        });
+        }).exceptionHandler(e -> {
+            handler.handle(Future.failedFuture(e));
+        }).setFollowRedirects(true).end();
     }
 
     private void catalog(Handler<AsyncResult<Object>> handler) {
-        vertx.executeBlocking(future -> {
-            SendMessageList res = doGenericRequest(rootOPDS + "/opds");
-            future.complete(res);
-        }, res -> {
-            handler.handle(res);
-        });
+        doGenericRequest("/opds", handler);
     }
-
 
     private void getCmd(String url, Handler<AsyncResult<Object>> handler) {
         doGenericRequest("/opds" + url, handler);
@@ -476,7 +494,6 @@ public class FliBot extends AbstractVerticle {
             if (event.statusCode() == 200) {
                 event
                         .bodyHandler(buffer -> {
-//                            Page page = PageParser.parse(new VertxBufferInputStream(buffer));
                             Page page = PageParser.parse(new ByteArrayInputStream(buffer.getBytes()));
                             if (page.getEntries() != null && page.getEntries().size() > 0) {
                                 if (page.getTitle() != null) {
