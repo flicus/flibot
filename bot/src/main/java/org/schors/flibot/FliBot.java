@@ -25,25 +25,19 @@ package org.schors.flibot;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.net.ProxyOptions;
+import io.vertx.core.net.ProxyType;
 import jersey.repackaged.com.google.common.cache.Cache;
 import jersey.repackaged.com.google.common.cache.CacheBuilder;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.entity.BufferedHttpEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.ssl.SSLContexts;
 import org.apache.log4j.Logger;
 import org.telegram.telegrambots.ApiContext;
 import org.telegram.telegrambots.ApiContextInitializer;
@@ -61,15 +55,14 @@ import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -88,7 +81,8 @@ public class FliBot extends AbstractVerticle {
 
     private TelegramBotsApi telegram;
     private HttpClientContext context;
-    private CloseableHttpClient httpclient;
+    private HttpClient httpclient;
+    //    private CloseableHttpClient httpclient;
     private Storage db;
     private Cache<String, String> urlCache;
     private Map<String, Search> searches = new ConcurrentHashMap<>();
@@ -147,37 +141,32 @@ public class FliBot extends AbstractVerticle {
 
         ApiContextInitializer.init();
         DefaultBotOptions botOptions = ApiContext.getInstance(DefaultBotOptions.class);
-
         telegram = new TelegramBotsApi();
         context = HttpClientContext.create();
         db = new Storage(vertx, config().getString("admin"));
         urlCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
         boolean usetor = config().getBoolean("usetor");
-        if (usetor) {
-            rootOPDS = rootOPDStor;
-            InetSocketAddress socksaddr = new InetSocketAddress(config().getString("torhost"), Integer.parseInt(config().getString("torport")));
-            context.setAttribute("socks.address", socksaddr);
 
-            Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
-                    .register("http", new MyConnectionSocketFactory())
-                    .register("https", new MySSLConnectionSocketFactory(SSLContexts.createSystemDefault())).build();
-            PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg, new FakeDNSResolver());
-            httpclient = HttpClients.custom().setConnectionManager(cm).build();
-            HttpHost proxy = new HttpHost(config().getString("torhost"), Integer.valueOf(config().getString("torport")));
-            RequestConfig requestConfig = RequestConfig.custom().setProxy(proxy).build();
-            botOptions.setRequestConfig(requestConfig);
-        } else {
-            rootOPDS = rootOPDShttp;
-            httpclient = HttpClientBuilder.create()
-                    .setSSLHostnameVerifier(new NoopHostnameVerifier())
-                    .setConnectionTimeToLive(70, TimeUnit.SECONDS)
-                    .setMaxConnTotal(100)
-                    .build();
+        HttpClientOptions httpOptions = new HttpClientOptions()
+                .setTrustAll(true)
+                .setIdleTimeout(50)
+                .setMaxPoolSize(100)
+                .setDefaultHost(usetor ? rootOPDStor : rootOPDShttp)
+                .setDefaultPort(80)
+                .setLogActivity(true);
+
+        if (usetor) {
+            httpOptions
+                    .setProxyOptions(new ProxyOptions()
+                            .setType(ProxyType.SOCKS4)
+                            .setHost(config().getString("torhost"))
+                            .setPort(Integer.valueOf(config().getString("torport"))));
         }
+        httpclient = vertx.createHttpClient(httpOptions);
 
         try {
-            telegram.registerBot(new TelegramLongPollingBot(botOptions) {
+            telegram.registerBot(new TelegramLongPollingBot() {
 
                 private void sendReply(Update update, String res) {
                     Message result = null;
@@ -400,15 +389,6 @@ public class FliBot extends AbstractVerticle {
         }
     }
 
-    private void catalog(Handler<AsyncResult<Object>> handler) {
-        vertx.executeBlocking(future -> {
-            SendMessageList res = doGenericRequest(rootOPDS + "/opds");
-            future.complete(res);
-        }, res -> {
-            handler.handle(res);
-        });
-    }
-
     private void downloadz(String url, Handler<AsyncResult<Object>> handler) {
         vertx.executeBlocking(future -> {
             HttpGet httpGet = new HttpGet(rootOPDS + url);
@@ -468,97 +448,91 @@ public class FliBot extends AbstractVerticle {
         });
     }
 
-    private void getCmd(String url, Handler<AsyncResult<Object>> handler) {
+    private void catalog(Handler<AsyncResult<Object>> handler) {
         vertx.executeBlocking(future -> {
-            SendMessageList res = doGenericRequest(rootOPDS + url);
+            SendMessageList res = doGenericRequest(rootOPDS + "/opds");
             future.complete(res);
         }, res -> {
             handler.handle(res);
         });
+    }
+
+
+    private void getCmd(String url, Handler<AsyncResult<Object>> handler) {
+        doGenericRequest("/opds" + url, handler);
     }
 
     private void getAuthor(String author, Handler<AsyncResult<Object>> handler) {
-        vertx.executeBlocking(future -> {
-            SendMessageList res = doGenericRequest(rootOPDS + "/opds" + String.format(authorSearch, author));
-            future.complete(res);
-        }, res -> {
-            handler.handle(res);
-        });
+        doGenericRequest("/opds" + String.format(authorSearch, author), handler);
     }
 
     private void getBook(String book, Handler<AsyncResult<Object>> handler) {
-        vertx.executeBlocking(future -> {
-            SendMessageList res = doGenericRequest(rootOPDS + "/opds" + String.format(bookSearch, book));
-            future.complete(res);
-        }, res -> {
-            handler.handle(res);
-        });
+        doGenericRequest("/opds" + String.format(bookSearch, book), handler);
     }
 
-    private SendMessageList doGenericRequest(String url) {
-//        log.debug("doGeneric: "+url);
+    protected void doGenericRequest(String url, Handler<AsyncResult<Object>> handler) {
         SendMessageList result = new SendMessageList(4096);
-        HttpGet httpGet = new HttpGet(url);
-        try {
-            CloseableHttpResponse response = httpclient.execute(httpGet, context);
-            if (response.getStatusLine().getStatusCode() == 200) {
-                HttpEntity ht = response.getEntity();
-                BufferedHttpEntity buf = new BufferedHttpEntity(ht);
-                Page page = PageParser.parse(buf.getContent());
-                if (page.getEntries() != null && page.getEntries().size() > 0) {
-                    if (page.getTitle() != null) {
-                        result.append("<b>").append(page.getTitle()).append("</b>\n");
-                    }
-                    page.getEntries().stream().forEach(entry -> {
-                        result.append("<b>").append(entry.getTitle()).append("</b>");
-                        if (entry.getAuthor() != null) {
-                            result.append(" (").append(entry.getAuthor()).append(")");
-                        }
-                        result.append("\n");
-                        entry.getLinks().stream()
-                                .filter((l) -> l.getType() != null && l.getType().toLowerCase().contains("opds-catalog"))
-                                .forEach(link -> {
-                                    if (link.getTitle() != null) {
-                                        result.append(link.getTitle());
+        httpclient.get(url, event -> {
+            if (event.statusCode() == 200) {
+                event
+                        .bodyHandler(buffer -> {
+//                            Page page = PageParser.parse(new VertxBufferInputStream(buffer));
+                            Page page = PageParser.parse(new ByteArrayInputStream(buffer.getBytes()));
+                            if (page.getEntries() != null && page.getEntries().size() > 0) {
+                                if (page.getTitle() != null) {
+                                    result.append("<b>").append(page.getTitle()).append("</b>\n");
+                                }
+                                page.getEntries().stream().forEach(entry -> {
+                                    result.append("<b>").append(entry.getTitle()).append("</b>");
+                                    if (entry.getAuthor() != null) {
+                                        result.append(" (").append(entry.getAuthor()).append(")");
                                     }
-                                    String id = Integer.toHexString(link.getHref().hashCode());
-                                    urlCache.put(id, link.getHref());
-                                    result.append(" /c").append(id).append("\n");
+                                    result.append("\n");
+                                    entry.getLinks().stream()
+                                            .filter((l) -> l.getType() != null && l.getType().toLowerCase().contains("opds-catalog"))
+                                            .forEach(link -> {
+                                                if (link.getTitle() != null) {
+                                                    result.append(link.getTitle());
+                                                }
+                                                String id = Integer.toHexString(link.getHref().hashCode());
+                                                urlCache.put(id, link.getHref());
+                                                result.append(" /c").append(id).append("\n");
+                                            });
+                                    entry.getLinks().stream()
+                                            .filter(l -> l.getRel() != null && l.getRel().contains("open-access"))
+                                            .forEach(link -> {
+                                                String type = link.getType().replace("application/", "");
+                                                result.append(type);
+                                                String id = Integer.toHexString(link.getHref().hashCode());
+                                                urlCache.put(id, link.getHref());
+                                                result.append(" : /d").append(id).append("\n");
+                                                if ("fb2+zip".equals(type)) {
+                                                    result.append("fb2").append(" : /z").append(id).append("\n");
+                                                }
+                                            });
+                                    result.append("\n");
                                 });
-                        entry.getLinks().stream()
-                                .filter(l -> l.getRel() != null && l.getRel().contains("open-access"))
-                                .forEach(link -> {
-                                    String type = link.getType().replace("application/", "");
-                                    result.append(type);
-                                    String id = Integer.toHexString(link.getHref().hashCode());
-                                    urlCache.put(id, link.getHref());
-                                    result.append(" : /d").append(id).append("\n");
-                                    if ("fb2+zip".equals(type)) {
-                                        result.append("fb2").append(" : /z").append(id).append("\n");
-
-                                    }
-//                                    else if ("epub+zip".equals(type)) {
-//                                        sb.append("epub").append(" : /z").append(id).append("\n");
-//                                    }
-                                });
-                        result.append("\n");
-                    });
-                    page.getLinks().stream()
-                            .filter((l) -> l.getRel().equals("next"))
-                            .forEach(lnk -> {
-                                String id = Integer.toHexString(lnk.getHref().hashCode());
-                                urlCache.put(id, lnk.getHref());
-                                result.append("next : /c").append(id).append("\n");
-                            });
-                } else {
-                    result.append("Nothing found");
-                }
-            }
-        } catch (Exception e) {
-            log.warn(e, e);
-        }
-        return result;
+                                page.getLinks().stream()
+                                        .filter((l) -> l.getRel().equals("next"))
+                                        .forEach(lnk -> {
+                                            String id = Integer.toHexString(lnk.getHref().hashCode());
+                                            urlCache.put(id, lnk.getHref());
+                                            result.append("next : /c").append(id).append("\n");
+                                        });
+                            } else {
+                                result.append("Nothing found");
+                            }
+                            handler.handle(Future.succeededFuture(result));
+                        })
+                        .exceptionHandler(e -> {
+                            handler.handle(Future.failedFuture(e));
+                        });
+            } else handler.handle(Future.failedFuture(event.statusMessage()));
+        }).exceptionHandler(e -> {
+            handler.handle(Future.failedFuture(e));
+        }).end();
     }
+
 
     private String normalizeCmd(String cmd) {
         return cmd.split("@")[0].substring(2).trim().replaceAll(" ", "+");
