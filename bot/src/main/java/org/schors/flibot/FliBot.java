@@ -29,6 +29,7 @@ import io.vertx.core.Handler;
 import jersey.repackaged.com.google.common.cache.Cache;
 import jersey.repackaged.com.google.common.cache.CacheBuilder;
 import org.apache.http.HttpEntity;
+import org.apache.http.client.RedirectStrategy;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
@@ -38,6 +39,7 @@ import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -158,13 +160,14 @@ public class FliBot extends AbstractVerticle {
                     .register("http", new MyConnectionSocketFactory())
                     .register("https", new MySSLConnectionSocketFactory(SSLContexts.createSystemDefault())).build();
             PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg, new FakeDNSResolver());
-            httpclient = HttpClients.custom().setConnectionManager(cm).build();
+            httpclient = HttpClients.custom().setRedirectStrategy(new DefaultRedirectStrategy()).setConnectionManager(cm).build();
         } else {
             rootOPDS = rootOPDShttp;
             httpclient = HttpClientBuilder.create()
                     .setSSLHostnameVerifier(new NoopHostnameVerifier())
                     .setConnectionTimeToLive(70, TimeUnit.SECONDS)
                     .setMaxConnTotal(100)
+                    .setRedirectStrategy(new DefaultRedirectStrategy())
                     .build();
         }
 
