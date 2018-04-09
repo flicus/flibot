@@ -48,8 +48,7 @@ public class PageParser {
         final Page page = new Page();
         try {
             xmlDoc = parser.build(input);
-            System.out.println(xmlDoc.toString());
-            log.warn(xmlDoc.toString());
+            log.info("Parsed xml: " + xmlDoc.toString());
             String title = xmlDoc.getRootElement().getAttributeValue("title");
             page.setTitle(title);
 

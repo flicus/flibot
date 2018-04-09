@@ -35,7 +35,6 @@ import io.vertx.core.net.ProxyType;
 import io.vertx.core.streams.Pump;
 import jersey.repackaged.com.google.common.cache.Cache;
 import jersey.repackaged.com.google.common.cache.CacheBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.log4j.Logger;
 import org.telegram.telegrambots.ApiContext;
 import org.telegram.telegrambots.ApiContextInitializer;
@@ -78,9 +77,7 @@ public class FliBot extends AbstractVerticle {
     private static final Logger log = Logger.getLogger(FliBot.class);
 
     private TelegramBotsApi telegram;
-    private HttpClientContext context;
     private HttpClient httpclient;
-    //    private CloseableHttpClient httpclient;
     private Storage db;
     private Cache<String, String> urlCache;
     private Map<String, Search> searches = new ConcurrentHashMap<>();
@@ -140,7 +137,6 @@ public class FliBot extends AbstractVerticle {
         ApiContextInitializer.init();
         DefaultBotOptions botOptions = ApiContext.getInstance(DefaultBotOptions.class);
         telegram = new TelegramBotsApi();
-        context = HttpClientContext.create();
         db = new Storage(vertx, config().getString("admin"));
         urlCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
@@ -243,10 +239,11 @@ public class FliBot extends AbstractVerticle {
                         sendBusy(update);
                         String cmd = update.getMessage().getText();
                         String userName = update.getMessage().getFrom().getUserName();
-                        log.warn("onUpdate: " + cmd + ", " + userName);
+                        log.info("onUpdate: " + cmd + ", " + userName);
                         if (db.isRegisteredUser(userName)) {
                             if (cmd.startsWith("/author")) {
                                 Search search = searches.get(userName);
+                                log.info("onAuthorSearch: " + search);
                                 if (search != null) {
                                     searches.remove(userName);
                                     getAuthor(search.getToSearch(), event -> {
@@ -254,6 +251,7 @@ public class FliBot extends AbstractVerticle {
                                             sendReply(update, (SendMessageList) event.result());
                                         } else {
                                             sendReply(update, "Error happened :(");
+                                            log.warn("onError: " + event.cause().getMessage());
                                         }
                                     });
                                 } else {
@@ -264,6 +262,7 @@ public class FliBot extends AbstractVerticle {
                                 }
                             } else if (cmd.startsWith("/book")) {
                                 Search search = searches.get(userName);
+                                log.info("onBookSearch: " + search);
                                 if (search != null) {
                                     searches.remove(userName);
                                     getBook(search.getToSearch(), event -> {
@@ -271,6 +270,7 @@ public class FliBot extends AbstractVerticle {
                                             sendReply(update, (SendMessageList) event.result());
                                         } else {
                                             sendReply(update, "Error happened :(");
+                                            log.warn("onError: " + event.cause().getMessage());
                                         }
                                     });
                                 } else {
@@ -283,7 +283,12 @@ public class FliBot extends AbstractVerticle {
                                 String url = urlCache.getIfPresent(normalizeCmd(cmd));
                                 if (url != null) {
                                     getCmd(url, event -> {
-                                        if (event.succeeded()) sendReply(update, (SendMessageList) event.result());
+                                        if (event.succeeded()) {
+                                            sendReply(update, (SendMessageList) event.result());
+                                        } else {
+                                            sendReply(update, "Error happened :(");
+                                            log.warn("onError: " + event.cause().getMessage());
+                                        }
                                     });
                                 } else {
                                     sendReply(update, "Expired command");
@@ -296,6 +301,7 @@ public class FliBot extends AbstractVerticle {
                                             sendFile(update, (SendDocument) event.result());
                                         } else {
                                             sendReply(update, "Error happened :(");
+                                            log.warn("onError: " + event.cause().getMessage());
                                         }
                                     });
                                 } else {
@@ -309,6 +315,7 @@ public class FliBot extends AbstractVerticle {
                                             sendFile(update, (SendDocument) event.result());
                                         } else {
                                             sendReply(update, "Error happened :(");
+                                            log.warn("onError: " + event.cause().getMessage());
                                         }
                                     });
                                 } else {
@@ -316,7 +323,12 @@ public class FliBot extends AbstractVerticle {
                                 }
                             } else if (cmd.startsWith("/k")) {
                                 catalog(event -> {
-                                    if (event.succeeded()) sendReply(update, (SendMessageList) event.result());
+                                    if (event.succeeded()) {
+                                        sendReply(update, (SendMessageList) event.result());
+                                    } else {
+                                        sendReply(update, "Error happened :(");
+                                        log.warn("onError: " + event.cause().getMessage());
+                                    }
                                 });
                             } else if (cmd.startsWith("/r")) {
                                 if (userName.equals(config().getString("admin"))) {
@@ -328,6 +340,7 @@ public class FliBot extends AbstractVerticle {
                                 }
                             } else {
                                 Search search = searches.get(userName);
+                                log.info("onSearch: " + search);
                                 if (search != null) {
                                     searches.remove(userName);
                                     switch (search.getSearchType()) {
@@ -337,6 +350,7 @@ public class FliBot extends AbstractVerticle {
                                                     sendReply(update, (SendMessageList) event.result());
                                                 } else {
                                                     sendReply(update, "Error happened :(");
+                                                    log.warn("onError: " + event.cause().getMessage());
                                                 }
                                             });
                                             break;
@@ -347,6 +361,7 @@ public class FliBot extends AbstractVerticle {
                                                     sendReply(update, (SendMessageList) event.result());
                                                 } else {
                                                     sendReply(update, "Error happened :(");
+                                                    log.warn("onError: " + event.cause().getMessage());
                                                 }
                                             });
                                             break;
@@ -442,6 +457,7 @@ public class FliBot extends AbstractVerticle {
 
     private void download(String url, Handler<AsyncResult<Object>> handler) {
         httpclient.get(url, res -> {
+            log.info(String.format("onDownload: RC=%d, MSG=%s", res.statusCode(), res.statusMessage()));
             if (res.statusCode() == 200) {
                 try {
                     File book = File.createTempFile(fileNameParser.parse(url), null);
@@ -466,6 +482,9 @@ public class FliBot extends AbstractVerticle {
                 } catch (Exception e) {
                     handler.handle(Future.failedFuture(e));
                 }
+            } else {
+                log.warn("Unsuccesfull HTTP req: " + res.statusCode());
+                handler.handle(Future.failedFuture("Error on request: " + res.statusCode()));
             }
         }).exceptionHandler(e -> {
             handler.handle(Future.failedFuture(e));
@@ -491,11 +510,13 @@ public class FliBot extends AbstractVerticle {
     protected void doGenericRequest(String url, Handler<AsyncResult<Object>> handler) {
         SendMessageList result = new SendMessageList(4096);
         httpclient.get(url, event -> {
-            log.debug("HTTP: " + event.statusCode());
+            log.info(String.format("onGenericReq: RC=%d, MSG=%s", event.statusCode(), event.statusMessage()));
             if (event.statusCode() == 200) {
                 event
                         .bodyHandler(buffer -> {
+                            log.info("onBodyHandler");
                             Page page = PageParser.parse(new ByteArrayInputStream(buffer.getBytes()));
+                            log.info("Page: " + page);
                             if (page.getEntries() != null && page.getEntries().size() > 0) {
                                 if (page.getTitle() != null) {
                                     result.append("<b>").append(page.getTitle()).append("</b>\n");
@@ -545,7 +566,10 @@ public class FliBot extends AbstractVerticle {
                         .exceptionHandler(e -> {
                             handler.handle(Future.failedFuture(e));
                         });
-            } else handler.handle(Future.failedFuture(event.statusMessage()));
+            } else {
+                log.warn("Unsuccesfull HTTP req: " + event.statusCode());
+                handler.handle(Future.failedFuture(event.statusMessage()));
+            }
         }).exceptionHandler(e -> {
             handler.handle(Future.failedFuture(e));
         }).setFollowRedirects(true).end();

@@ -57,4 +57,13 @@ public class Page {
     public void setEntries(List<Entry> entries) {
         this.entries = entries;
     }
+
+    @Override
+    public String toString() {
+        return "Page{" +
+                "title='" + title + '\'' +
+                ", links=" + links +
+                ", entries=" + entries +
+                '}';
+    }
 }

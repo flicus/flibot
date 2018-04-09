@@ -52,4 +52,12 @@ public class Search {
     public void setSearchType(SearchType searchType) {
         this.searchType = searchType;
     }
+
+    @Override
+    public String toString() {
+        return "Search{" +
+                "toSearch='" + toSearch + '\'' +
+                ", searchType=" + searchType +
+                '}';
+    }
 }
