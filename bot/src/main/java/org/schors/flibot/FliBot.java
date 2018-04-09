@@ -29,21 +29,19 @@ import io.vertx.core.Handler;
 import jersey.repackaged.com.google.common.cache.Cache;
 import jersey.repackaged.com.google.common.cache.CacheBuilder;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.ssl.SSLContexts;
 import org.apache.log4j.Logger;
+import org.telegram.telegrambots.ApiContext;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.ActionType;
@@ -55,16 +53,15 @@ import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 import java.io.*;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -141,7 +138,7 @@ public class FliBot extends AbstractVerticle {
     public void start() {
 
         ApiContextInitializer.init();
-
+        DefaultBotOptions botOptions = ApiContext.getInstance(DefaultBotOptions.class);
         telegram = new TelegramBotsApi();
         context = HttpClientContext.create();
         db = new Storage(vertx, config().getString("admin"));
@@ -150,20 +147,26 @@ public class FliBot extends AbstractVerticle {
         boolean usetor = config().getBoolean("usetor");
         if (usetor) {
             rootOPDS = rootOPDStor;
-            InetSocketAddress socksaddr = new InetSocketAddress(config().getString("torhost"), Integer.parseInt(config().getString("torport")));
-            context.setAttribute("socks.address", socksaddr);
-
-            Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
-                    .register("http", new MyConnectionSocketFactory())
-                    .register("https", new MySSLConnectionSocketFactory(SSLContexts.createSystemDefault())).build();
-            PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg, new FakeDNSResolver());
-            httpclient = HttpClients.custom().setRedirectStrategy(new DefaultRedirectStrategy()).setConnectionManager(cm).build();
+//            InetSocketAddress socksaddr = new InetSocketAddress(config().getString("torhost"), Integer.parseInt(config().getString("torport")));
+//            context.setAttribute("socks.address", socksaddr);
+//
+//            Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
+//                    .register("http", new MyConnectionSocketFactory())
+//                    .register("https", new MySSLConnectionSocketFactory(SSLContexts.createSystemDefault())).build();
+//            PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg, new FakeDNSResolver());
+            HttpHost httpHost = new HttpHost(config().getString("torhost"), Integer.parseInt(config().getString("torport")));
+            RequestConfig requestConfig = RequestConfig.custom().setProxy(httpHost).build();
+            httpclient = HttpClients.custom().setRedirectStrategy(new DefaultRedirectStrategy())
+//                    .setConnectionManager(cm)
+                    .setSSLHostnameVerifier(new NoopHostnameVerifier())
+                    .setDefaultRequestConfig(requestConfig)
+                    .build();
         } else {
             rootOPDS = rootOPDShttp;
             httpclient = HttpClientBuilder.create()
                     .setSSLHostnameVerifier(new NoopHostnameVerifier())
-                    .setConnectionTimeToLive(70, TimeUnit.SECONDS)
-                    .setMaxConnTotal(100)
+//                    .setConnectionTimeToLive(70, TimeUnit.SECONDS)
+//                    .setMaxConnTotal(100)
                     .setRedirectStrategy(new DefaultRedirectStrategy())
                     .build();
         }
@@ -493,6 +496,7 @@ public class FliBot extends AbstractVerticle {
         HttpGet httpGet = new HttpGet(url);
         try {
             CloseableHttpResponse response = httpclient.execute(httpGet, context);
+
             if (response.getStatusLine().getStatusCode() == 200) {
                 ByteArrayOutputStream data = new ByteArrayOutputStream();
                 response.getEntity().writeTo(data);
