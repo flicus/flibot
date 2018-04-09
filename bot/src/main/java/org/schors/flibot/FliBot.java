@@ -491,6 +491,7 @@ public class FliBot extends AbstractVerticle {
     protected void doGenericRequest(String url, Handler<AsyncResult<Object>> handler) {
         SendMessageList result = new SendMessageList(4096);
         httpclient.get(url, event -> {
+            log.debug("HTTP: " + event.statusCode());
             if (event.statusCode() == 200) {
                 event
                         .bodyHandler(buffer -> {
@@ -547,7 +548,7 @@ public class FliBot extends AbstractVerticle {
             } else handler.handle(Future.failedFuture(event.statusMessage()));
         }).exceptionHandler(e -> {
             handler.handle(Future.failedFuture(e));
-        }).end();
+        }).setFollowRedirects(true).end();
     }
 
 
