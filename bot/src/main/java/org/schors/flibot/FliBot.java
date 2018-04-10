@@ -496,7 +496,7 @@ public class FliBot extends AbstractVerticle {
     }
 
     private void getCmd(String url, Handler<AsyncResult<Object>> handler) {
-        doGenericRequest("/opds" + url, handler);
+        doGenericRequest(url, handler);
     }
 
     private void getAuthor(String author, Handler<AsyncResult<Object>> handler) {
