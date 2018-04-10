@@ -132,6 +132,13 @@ public class FliBot extends AbstractVerticle {
                         return parts[parts.length - 2] + "." + parts[parts.length - 1] + ".rar";
                     }
                 })
+                .add(new FileNameParser.FileType("fb2") {
+                    @Override
+                    public String parse(String url) {
+                        String[] parts = url.split("/");
+                        return parts[parts.length - 2] + "." + parts[parts.length - 1] + ".zip";
+                    }
+                })
         ;
     }
 
@@ -422,6 +429,13 @@ public class FliBot extends AbstractVerticle {
                                                         ZipEntry entry = zip.getNextEntry();
 //                                                        File book2 = File.createTempFile("fbunzip_" + Long.toHexString(System.currentTimeMillis()), null);
                                                         File book2 = new File(tmpdir.getAbsolutePath() + "/" + entry.getName());
+                                                        if (book2.exists()) {
+                                                            try {
+                                                                book2.delete();
+                                                            } catch (Exception e) {
+                                                                log.warn("Unable to delete: " + book2.getName());
+                                                            }
+                                                        }
                                                         byte[] buffer = new byte[2048];
                                                         FileOutputStream fileOutputStream = new FileOutputStream(book2);
                                                         int len = 0;
@@ -433,7 +447,7 @@ public class FliBot extends AbstractVerticle {
 //                                                        book2.renameTo(new File(book2.getParent() + "/" + entry.getName()));
                                                         final SendDocument sendDocument = new SendDocument();
                                                         sendDocument.setNewDocument(book2);
-                                                        sendDocument.setCaption(entry.getName());
+                                                        sendDocument.setCaption(book2.getName());
                                                         future.complete(sendDocument);
 
                                                     } catch (Exception e) {
