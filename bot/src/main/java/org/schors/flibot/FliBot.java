@@ -51,11 +51,13 @@ import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
+import sun.security.action.GetPropertyAction;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.security.AccessController;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +75,8 @@ public class FliBot extends AbstractVerticle {
     private static final String rootOPDShttp = "http://flibusta.is";
     private static final String authorSearch = "/search?searchType=authors&searchTerm=%s";
     private static final String bookSearch = "/search?searchType=books&searchTerm=%s";
+    private static final File tmpdir = new File(AccessController
+            .doPrivileged(new GetPropertyAction("java.io.tmpdir")));
 
     private static final Logger log = Logger.getLogger(FliBot.class);
 
@@ -416,7 +420,8 @@ public class FliBot extends AbstractVerticle {
                                                     try {
                                                         ZipInputStream zip = new ZipInputStream(new FileInputStream(book));
                                                         ZipEntry entry = zip.getNextEntry();
-                                                        File book2 = File.createTempFile("fbunzip_" + Long.toHexString(System.currentTimeMillis()), null);
+//                                                        File book2 = File.createTempFile("fbunzip_" + Long.toHexString(System.currentTimeMillis()), null);
+                                                        File book2 = new File(tmpdir.getAbsolutePath() + "/" + entry.getName());
                                                         byte[] buffer = new byte[2048];
                                                         FileOutputStream fileOutputStream = new FileOutputStream(book2);
                                                         int len = 0;
@@ -425,7 +430,7 @@ public class FliBot extends AbstractVerticle {
                                                         }
                                                         fileOutputStream.close();
                                                         zip.close();
-                                                        book2.renameTo(new File(book2.getParent() + "/" + entry.getName()));
+//                                                        book2.renameTo(new File(book2.getParent() + "/" + entry.getName()));
                                                         final SendDocument sendDocument = new SendDocument();
                                                         sendDocument.setNewDocument(book2);
                                                         sendDocument.setCaption(entry.getName());
@@ -461,13 +466,14 @@ public class FliBot extends AbstractVerticle {
             if (res.statusCode() == 200) {
                 try {
                     String fileName = fileNameParser.parse(url);
-                    File book = File.createTempFile(fileName, null);
+//                    File book = File.createTempFile(fileName, null);
+                    File book = new File(tmpdir.getAbsolutePath() + "/" + fileName);
                     vertx.fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), event -> {
                         if (event.succeeded()) {
                             Pump.pump(res
                                             .endHandler(done -> {
                                                 event.result().close();
-                                                book.renameTo(new File(book.getParent() + "/" + fileName));
+//                                                book.renameTo(new File(book.getParent() + "/" + fileName));
                                                 handler.handle(Future.succeededFuture(
                                                         new SendDocument()
                                                                 .setNewDocument(book)
