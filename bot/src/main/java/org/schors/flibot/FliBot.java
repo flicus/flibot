@@ -467,12 +467,12 @@ public class FliBot extends AbstractVerticle {
                             Pump.pump(res
                                             .endHandler(done -> {
                                                 event.result().close();
+                                                book.renameTo(new File(book.getParent() + "/" + fileName));
                                                 handler.handle(Future.succeededFuture(
-                                                        book.renameTo(new File(book.getParent() + "/" + fileName)));
                                                         new SendDocument()
                                                                 .setNewDocument(book)
-                                                                .setCaption(fileName);
-                                                ))
+                                                                .setCaption(fileName)
+                                                ));
                                             })
                                             .exceptionHandler(e -> handler.handle(Future.failedFuture(e))),
                                     event.result())
