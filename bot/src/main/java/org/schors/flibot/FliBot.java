@@ -573,7 +573,7 @@ public class FliBot extends AbstractVerticle {
             }
         }).exceptionHandler(e -> {
             handler.handle(Future.failedFuture(e));
-        }).setFollowRedirects(true).end();
+        }).end();
     }
 
 
