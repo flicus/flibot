@@ -461,6 +461,7 @@ public class FliBot extends AbstractVerticle {
     }
 
     private void download(String url, Handler<AsyncResult<Object>> handler) {
+        log.info("Download: " + url);
         httpclient.get(url, res -> {
             log.info(String.format("onDownload: RC=%d, MSG=%s", res.statusCode(), res.statusMessage()));
             if (res.statusCode() == 200) {
