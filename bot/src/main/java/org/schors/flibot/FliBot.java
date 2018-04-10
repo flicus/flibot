@@ -417,7 +417,6 @@ public class FliBot extends AbstractVerticle {
                                                         ZipInputStream zip = new ZipInputStream(new FileInputStream(book));
                                                         ZipEntry entry = zip.getNextEntry();
                                                         File book2 = File.createTempFile("fbunzip_" + Long.toHexString(System.currentTimeMillis()), null);
-
                                                         byte[] buffer = new byte[2048];
                                                         FileOutputStream fileOutputStream = new FileOutputStream(book2);
                                                         int len = 0;
@@ -426,8 +425,9 @@ public class FliBot extends AbstractVerticle {
                                                         }
                                                         fileOutputStream.close();
                                                         zip.close();
+                                                        book2.renameTo(new File(book2.getParent() + "/" + entry.getName()));
                                                         final SendDocument sendDocument = new SendDocument();
-                                                        sendDocument.setDocument(book2.getAbsolutePath());
+                                                        sendDocument.setNewDocument(book2);
                                                         sendDocument.setCaption(entry.getName());
                                                         future.complete(sendDocument);
 
@@ -468,10 +468,11 @@ public class FliBot extends AbstractVerticle {
                                             .endHandler(done -> {
                                                 event.result().close();
                                                 handler.handle(Future.succeededFuture(
+                                                        book.renameTo(new File(book.getParent() + "/" + fileName)));
                                                         new SendDocument()
                                                                 .setNewDocument(book)
-                                                                .setCaption(fileName)
-                                                ));
+                                                                .setCaption(fileName);
+                                                ))
                                             })
                                             .exceptionHandler(e -> handler.handle(Future.failedFuture(e))),
                                     event.result())
