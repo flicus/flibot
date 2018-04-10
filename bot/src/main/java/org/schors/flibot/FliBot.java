@@ -69,7 +69,7 @@ public class FliBot extends AbstractVerticle {
     //http://flibustahezeous3.onion/opds//search?searchType=authors&searchTerm=Толстой
     //http://flibustahezeous3.onion/search?searchType=books&searchTerm=криптономикон
 
-    private static final String rootOPDStor = "http://flibustahezeous3.onion";
+    private static final String rootOPDStor = "flibustahezeous3.onion";
     private static final String rootOPDShttp = "http://flibusta.is";
     private static final String authorSearch = "/search?searchType=authors&searchTerm=%s";
     private static final String bookSearch = "/search?searchType=books&searchTerm=%s";
@@ -573,7 +573,7 @@ public class FliBot extends AbstractVerticle {
             }
         }).exceptionHandler(e -> {
             handler.handle(Future.failedFuture(e));
-        }).end();
+        }).setFollowRedirects(true).end();
     }
 
 
