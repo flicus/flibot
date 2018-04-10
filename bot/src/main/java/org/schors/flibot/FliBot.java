@@ -460,7 +460,8 @@ public class FliBot extends AbstractVerticle {
             log.info(String.format("onDownload: RC=%d, MSG=%s", res.statusCode(), res.statusMessage()));
             if (res.statusCode() == 200) {
                 try {
-                    File book = File.createTempFile(fileNameParser.parse(url), null);
+                    String fileName = fileNameParser.parse(url);
+                    File book = File.createTempFile(fileName, null);
                     vertx.fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), event -> {
                         if (event.succeeded()) {
                             Pump.pump(res
@@ -469,7 +470,7 @@ public class FliBot extends AbstractVerticle {
                                                 handler.handle(Future.succeededFuture(
                                                         new SendDocument()
                                                                 .setNewDocument(book)
-                                                                .setCaption(book.getName())
+                                                                .setCaption(fileName)
                                                 ));
                                             })
                                             .exceptionHandler(e -> handler.handle(Future.failedFuture(e))),
