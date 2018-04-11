@@ -424,12 +424,15 @@ public class FliBot extends AbstractVerticle {
                         if (event.succeeded()) {
                             Pump.pump(res
                                             .endHandler(done -> {
+
+                                                event.result().flush();
                                                 event.result().close();
                                                 vertx.executeBlocking(future -> {
                                                     try {
                                                         log.info("Start unzip");
                                                         ZipInputStream zip = new ZipInputStream(new FileInputStream(book));
                                                         ZipEntry entry = zip.getNextEntry();
+                                                        log.info(String.format("TMP: %s, ENTRY: %s", tmpdir, entry));
 //                                                        File book2 = File.createTempFile("fbunzip_" + Long.toHexString(System.currentTimeMillis()), null);
                                                         File book2 = new File(tmpdir.getAbsolutePath() + "/" + entry.getName());
                                                         if (book2.exists()) {
