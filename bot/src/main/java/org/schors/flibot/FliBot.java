@@ -414,9 +414,11 @@ public class FliBot extends AbstractVerticle {
     }
 
     private void downloadz(String url, Handler<AsyncResult<Object>> handler) {
+        log.info("Start downloading zip");
         httpclient.get(url, res -> {
             if (res.statusCode() == 200) {
                 try {
+                    log.info("Downloaded");
                     File book = File.createTempFile("flibot_" + Long.toHexString(System.currentTimeMillis()), null);
                     vertx.fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), event -> {
                         if (event.succeeded()) {
@@ -425,6 +427,7 @@ public class FliBot extends AbstractVerticle {
                                                 event.result().close();
                                                 vertx.executeBlocking(future -> {
                                                     try {
+                                                        log.info("Start unzip");
                                                         ZipInputStream zip = new ZipInputStream(new FileInputStream(book));
                                                         ZipEntry entry = zip.getNextEntry();
 //                                                        File book2 = File.createTempFile("fbunzip_" + Long.toHexString(System.currentTimeMillis()), null);
@@ -451,25 +454,34 @@ public class FliBot extends AbstractVerticle {
                                                         future.complete(sendDocument);
 
                                                     } catch (Exception e) {
+                                                        log.info("Exception on unzip", e);
                                                         future.fail(e);
                                                     }
                                                 }, result -> {
+                                                    log.info("On blocking execute: " + result);
                                                     handler.handle(result);
                                                 });
 //                                                handler.handle(Util.result(true, new SendDocument().setDocument(book.getAbsolutePath()).setCaption("book"), null));
                                             })
-                                            .exceptionHandler(e -> handler.handle(Future.failedFuture(e))),
+                                            .exceptionHandler(e -> {
+                                                log.info("Pump eception: ", e);
+                                                handler.handle(Future.failedFuture(e));
+
+                                            }),
                                     event.result())
                                     .start();
                         } else {
+                            log.info("Error on file open: ", event.cause());
                             handler.handle(Future.failedFuture(event.cause()));
                         }
                     });
                 } catch (Exception e) {
+                    log.info("Exception after download: ", e);
                     handler.handle(Future.failedFuture(e));
                 }
             }
         }).exceptionHandler(event -> {
+            log.info("Exception on download: ", event.getCause());
             handler.handle(Future.failedFuture(event.getCause()));
         }).setFollowRedirects(true).end();
     }
