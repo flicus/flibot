@@ -424,47 +424,48 @@ public class FliBot extends AbstractVerticle {
                         if (event.succeeded()) {
                             Pump.pump(res
                                             .endHandler(done -> {
-
-                                                event.result().flush();
-                                                event.result().close();
-                                                vertx.executeBlocking(future -> {
-                                                    try {
-                                                        log.info("Start unzip");
-                                                        ZipInputStream zip = new ZipInputStream(new FileInputStream(book));
-                                                        ZipEntry entry = zip.getNextEntry();
-                                                        log.info(String.format("TMP: %s, ENTRY: %s", tmpdir, entry));
+                                                Future unzipFuture = Future.future();
+                                                Future flushFuture = Future.future();
+                                                event.result().flush(flushFuture.completer());
+                                                flushFuture.compose(o -> {
+                                                    Future closeFuture = Future.future();
+                                                    event.result().close(closeFuture.completer());
+                                                    return closeFuture;
+                                                }).compose(o -> {
+                                                    vertx.executeBlocking(future -> {
+                                                        try {
+                                                            log.info("Start unzip");
+                                                            ZipInputStream zip = new ZipInputStream(new FileInputStream(book));
+                                                            ZipEntry entry = zip.getNextEntry();
+                                                            log.info(String.format("TMP: %s, ENTRY: %s", tmpdir, entry));
 //                                                        File book2 = File.createTempFile("fbunzip_" + Long.toHexString(System.currentTimeMillis()), null);
-                                                        File book2 = new File(tmpdir.getAbsolutePath() + "/" + entry.getName());
-                                                        if (book2.exists()) {
-                                                            try {
-                                                                book2.delete();
-                                                            } catch (Exception e) {
-                                                                log.warn("Unable to delete: " + book2.getName());
+                                                            File book2 = new File(tmpdir.getAbsolutePath() + "/" + entry.getName());
+                                                            if (book2.exists()) {
+                                                                try {
+                                                                    book2.delete();
+                                                                } catch (Exception e) {
+                                                                    log.warn("Unable to delete: " + book2.getName());
+                                                                }
                                                             }
+                                                            byte[] buffer = new byte[2048];
+                                                            FileOutputStream fileOutputStream = new FileOutputStream(book2);
+                                                            int len = 0;
+                                                            while ((len = zip.read(buffer)) > 0) {
+                                                                fileOutputStream.write(buffer, 0, len);
+                                                            }
+                                                            fileOutputStream.close();
+                                                            zip.close();
+                                                            final SendDocument sendDocument = new SendDocument();
+                                                            sendDocument.setNewDocument(book2);
+                                                            sendDocument.setCaption(book2.getName());
+                                                            future.complete(sendDocument);
+                                                        } catch (Exception e) {
+                                                            log.info("Exception on unzip", e);
+                                                            future.fail(e);
                                                         }
-                                                        byte[] buffer = new byte[2048];
-                                                        FileOutputStream fileOutputStream = new FileOutputStream(book2);
-                                                        int len = 0;
-                                                        while ((len = zip.read(buffer)) > 0) {
-                                                            fileOutputStream.write(buffer, 0, len);
-                                                        }
-                                                        fileOutputStream.close();
-                                                        zip.close();
-//                                                        book2.renameTo(new File(book2.getParent() + "/" + entry.getName()));
-                                                        final SendDocument sendDocument = new SendDocument();
-                                                        sendDocument.setNewDocument(book2);
-                                                        sendDocument.setCaption(book2.getName());
-                                                        future.complete(sendDocument);
-
-                                                    } catch (Exception e) {
-                                                        log.info("Exception on unzip", e);
-                                                        future.fail(e);
-                                                    }
-                                                }, result -> {
-                                                    log.info("On blocking execute: " + result);
-                                                    handler.handle(result);
-                                                });
-//                                                handler.handle(Util.result(true, new SendDocument().setDocument(book.getAbsolutePath()).setCaption("book"), null));
+                                                    }, unzipFuture.completer());
+                                                }, unzipFuture);
+                                                unzipFuture.setHandler(handler);
                                             })
                                             .exceptionHandler(e -> {
                                                 log.info("Pump eception: ", e);
