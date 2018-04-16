@@ -494,7 +494,7 @@ public class FliBot extends AbstractVerticle {
     private void download(String url, Handler<AsyncResult<Object>> handler) {
         log.info("Download: " + url);
 
-        httpclient.get("https://gist.githubusercontent.com", "/flicus/dc1fe51afff2809a848f0ed8d6d1e558/raw/a63ec2e0bdc626226e0a997b783bd63318369910/TelegramOptions.java", res -> {
+        httpclient.get("gist.githubusercontent.com", "/flicus/dc1fe51afff2809a848f0ed8d6d1e558/raw/a63ec2e0bdc626226e0a997b783bd63318369910/TelegramOptions.java", res -> {
 //        httpclient.get(url, res -> {
             log.info(String.format("onDownload: RC=%d, MSG=%s", res.statusCode(), res.statusMessage()));
             if (res.statusCode() == 200) {
@@ -514,14 +514,19 @@ public class FliBot extends AbstractVerticle {
                                                                 .setCaption(fileName)
                                                 ));
                                             })
-                                            .exceptionHandler(e -> handler.handle(Future.failedFuture(e))),
+                                            .exceptionHandler(e -> {
+                                                log.warn(e, e);
+                                                handler.handle(Future.failedFuture(e));
+                                            }),
                                     event.result())
                                     .start();
                         } else {
+                            log.warn(event.cause(), event.cause());
                             handler.handle(Future.failedFuture(event.cause()));
                         }
                     });
                 } catch (Exception e) {
+                    log.warn(e, e);
                     handler.handle(Future.failedFuture(e));
                 }
             } else {
@@ -529,6 +534,7 @@ public class FliBot extends AbstractVerticle {
                 handler.handle(Future.failedFuture("Error on request: " + res.statusCode()));
             }
         }).exceptionHandler(e -> {
+            log.warn(e, e);
             handler.handle(Future.failedFuture(e));
         }).setFollowRedirects(true).end();
     }
