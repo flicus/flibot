@@ -465,7 +465,8 @@ public class FliBot extends AbstractVerticle {
                                                         }
                                                     }, unzipFuture.completer());
                                                 }, unzipFuture);
-                                                unzipFuture.setHandler(handler);
+                                                handler.handle(unzipFuture);
+//                                                unzipFuture.setHandler(handler);
                                             })
                                             .exceptionHandler(e -> {
                                                 log.info("Pump eception: ", e);
@@ -492,7 +493,9 @@ public class FliBot extends AbstractVerticle {
 
     private void download(String url, Handler<AsyncResult<Object>> handler) {
         log.info("Download: " + url);
-        httpclient.get(url, res -> {
+
+        httpclient.get("https://gist.githubusercontent.com", "/flicus/dc1fe51afff2809a848f0ed8d6d1e558/raw/a63ec2e0bdc626226e0a997b783bd63318369910/TelegramOptions.java", res -> {
+//        httpclient.get(url, res -> {
             log.info(String.format("onDownload: RC=%d, MSG=%s", res.statusCode(), res.statusMessage()));
             if (res.statusCode() == 200) {
                 try {
