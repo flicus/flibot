@@ -309,6 +309,7 @@ public class FliBot extends AbstractVerticle {
                                 if (url != null) {
                                     download(url, event -> {
                                         if (event.succeeded()) {
+                                            log.info("Sending file");
                                             sendFile(update, (SendDocument) event.result());
                                         } else {
                                             sendReply(update, "Error happened :(");
@@ -504,8 +505,10 @@ public class FliBot extends AbstractVerticle {
                     File book = new File(tmpdir.getAbsolutePath() + "/" + "t.java");
                     vertx.fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), event -> {
                         if (event.succeeded()) {
+                            log.info("file opened");
                             Pump.pump(res
                                             .endHandler(done -> {
+                                                log.info("pump done");
                                                 event.result().close();
 //                                                book.renameTo(new File(book.getParent() + "/" + fileName));
                                                 handler.handle(Future.succeededFuture(
