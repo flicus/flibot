@@ -501,7 +501,7 @@ public class FliBot extends AbstractVerticle {
                 try {
                     String fileName = fileNameParser.parse(url);
 //                    File book = File.createTempFile(fileName, null);
-                    File book = new File(tmpdir.getAbsolutePath() + "/" + fileName);
+                    File book = new File(tmpdir.getAbsolutePath() + "/" + "t.java");
                     vertx.fileSystem().open(book.getAbsolutePath(), new OpenOptions().setWrite(true), event -> {
                         if (event.succeeded()) {
                             Pump.pump(res
