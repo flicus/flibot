@@ -1,6 +1,7 @@
 package org.schors.flibot;
 
-import org.telegram.telegrambots.api.methods.send.SendMessage;
+
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 import java.util.ArrayList;
 import java.util.List;

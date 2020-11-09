@@ -23,34 +23,31 @@
 
 package org.schors.flibot;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import io.vertx.core.*;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.net.ProxyOptions;
 import io.vertx.core.net.ProxyType;
 import io.vertx.core.streams.Pump;
-import jersey.repackaged.com.google.common.cache.Cache;
-import jersey.repackaged.com.google.common.cache.CacheBuilder;
 import org.apache.log4j.Logger;
-import org.telegram.telegrambots.ApiContext;
 import org.telegram.telegrambots.ApiContextInitializer;
-import org.telegram.telegrambots.TelegramBotsApi;
-import org.telegram.telegrambots.api.methods.ActionType;
-import org.telegram.telegrambots.api.methods.send.SendChatAction;
-import org.telegram.telegrambots.api.methods.send.SendDocument;
-import org.telegram.telegrambots.api.methods.send.SendMessage;
-import org.telegram.telegrambots.api.objects.Message;
-import org.telegram.telegrambots.api.objects.Update;
-import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
-import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.ApiContext;
+import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.api.methods.ActionType;
+import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import sun.security.action.GetPropertyAction;
 
 import java.io.ByteArrayInputStream;
@@ -180,7 +177,7 @@ public class FliBot extends AbstractVerticle {
                             .setText(res)
                             .enableHtml(true);
                     try {
-                        result = sendMessage(message);
+                        result = execute(message);
                     } catch (TelegramApiException e) {
                         log.error(e, e);
                     }
@@ -190,7 +187,7 @@ public class FliBot extends AbstractVerticle {
                     Message result = null;
                     res.setChatId(String.valueOf(update.getMessage().getChatId()));
                     try {
-                        result = sendMessage(res);
+                        result = execute(res);
                     } catch (TelegramApiException e) {
                         log.error(e, e);
                     }
@@ -203,7 +200,7 @@ public class FliBot extends AbstractVerticle {
                         if (sm.getText() != null && sm.getText().length() > 0) {
                             sm.setChatId(String.valueOf(update.getMessage().getChatId()));
                             try {
-                                result = sendMessage(sm);
+                                result = execute(sm);
                             } catch (TelegramApiException e) {
                                 log.error(e, e);
                             }
@@ -216,7 +213,7 @@ public class FliBot extends AbstractVerticle {
                     Message result = null;
                     res.setChatId(update.getMessage().getChatId().toString());
                     try {
-                        result = sendDocument(res);
+                        result = execute(res);
                     } catch (TelegramApiException e) {
                         log.error(e, e);
                     }
@@ -228,7 +225,7 @@ public class FliBot extends AbstractVerticle {
                     sca.setChatId(update.getMessage().getChatId().toString());
                     sca.setAction(ActionType.UPLOADDOCUMENT);
                     try {
-                        sendChatAction(sca);
+                        execute(sca);
                     } catch (TelegramApiException e) {
                         log.error(e, e);
                     }
@@ -415,6 +412,7 @@ public class FliBot extends AbstractVerticle {
     }
 
     private void downloadz(String url, Handler<AsyncResult<Object>> handler) {
+
         log.info("Start downloading zip");
         httpclient.get(url, res -> {
             if (res.statusCode() == 200) {
@@ -425,48 +423,50 @@ public class FliBot extends AbstractVerticle {
                         if (event.succeeded()) {
                             Pump.pump(res
                                             .endHandler(done -> {
-                                                Future unzipFuture = Future.future();
-                                                Future flushFuture = Future.future();
-                                                event.result().flush(flushFuture.completer());
-                                                flushFuture.compose(o -> {
-                                                    Future closeFuture = Future.future();
-                                                    event.result().close(closeFuture.completer());
-                                                    return closeFuture;
-                                                }).compose(o -> {
-                                                    vertx.executeBlocking(future -> {
-                                                        try {
-                                                            log.info("Start unzip");
-                                                            ZipInputStream zip = new ZipInputStream(new FileInputStream(book));
-                                                            ZipEntry entry = zip.getNextEntry();
-                                                            log.info(String.format("TMP: %s, ENTRY: %s", tmpdir, entry));
-//                                                        File book2 = File.createTempFile("fbunzip_" + Long.toHexString(System.currentTimeMillis()), null);
-                                                            File book2 = new File(tmpdir.getAbsolutePath() + "/" + entry.getName());
-                                                            if (book2.exists()) {
+                                                Promise unzipFuture = Promise.promise();
+                                                Promise flushFuture = Promise.promise();
+                                                event.result().flush(flushFuture);
+                                                flushFuture.future()
+                                                        .compose(o -> {
+                                                            Promise closeFuture = Promise.promise();
+                                                            event.result().close(closeFuture);
+                                                            return closeFuture.future();
+                                                        })
+                                                        .compose(o -> {
+                                                            vertx.executeBlocking(future -> {
                                                                 try {
-                                                                    book2.delete();
+                                                                    log.info("Start unzip");
+                                                                    ZipInputStream zip = new ZipInputStream(new FileInputStream(book));
+                                                                    ZipEntry entry = zip.getNextEntry();
+                                                                    log.info(String.format("TMP: %s, ENTRY: %s", tmpdir, entry));
+//                                                        File book2 = File.createTempFile("fbunzip_" + Long.toHexString(System.currentTimeMillis()), null);
+                                                                    File book2 = new File(tmpdir.getAbsolutePath() + "/" + entry.getName());
+                                                                    if (book2.exists()) {
+                                                                        try {
+                                                                            book2.delete();
+                                                                        } catch (Exception e) {
+                                                                            log.warn("Unable to delete: " + book2.getName());
+                                                                        }
+                                                                    }
+                                                                    byte[] buffer = new byte[2048];
+                                                                    FileOutputStream fileOutputStream = new FileOutputStream(book2);
+                                                                    int len = 0;
+                                                                    while ((len = zip.read(buffer)) > 0) {
+                                                                        fileOutputStream.write(buffer, 0, len);
+                                                                    }
+                                                                    fileOutputStream.close();
+                                                                    zip.close();
+                                                                    final SendDocument sendDocument = new SendDocument();
+                                                                    sendDocument.setDocument(book2);
+                                                                    sendDocument.setCaption(book2.getName());
+                                                                    future.complete(sendDocument);
                                                                 } catch (Exception e) {
-                                                                    log.warn("Unable to delete: " + book2.getName());
+                                                                    log.info("Exception on unzip", e);
+                                                                    future.fail(e);
                                                                 }
-                                                            }
-                                                            byte[] buffer = new byte[2048];
-                                                            FileOutputStream fileOutputStream = new FileOutputStream(book2);
-                                                            int len = 0;
-                                                            while ((len = zip.read(buffer)) > 0) {
-                                                                fileOutputStream.write(buffer, 0, len);
-                                                            }
-                                                            fileOutputStream.close();
-                                                            zip.close();
-                                                            final SendDocument sendDocument = new SendDocument();
-                                                            sendDocument.setNewDocument(book2);
-                                                            sendDocument.setCaption(book2.getName());
-                                                            future.complete(sendDocument);
-                                                        } catch (Exception e) {
-                                                            log.info("Exception on unzip", e);
-                                                            future.fail(e);
-                                                        }
-                                                    }, unzipFuture.completer());
-                                                }, unzipFuture);
-                                                handler.handle(unzipFuture);
+                                                            }, unzipFuture);
+                                                        }, unzipFuture.future());
+                                                handler.handle(unzipFuture.future());
 //                                                unzipFuture.setHandler(handler);
                                             })
                                             .exceptionHandler(e -> {
@@ -513,7 +513,7 @@ public class FliBot extends AbstractVerticle {
 //                                                book.renameTo(new File(book.getParent() + "/" + fileName));
                                                 handler.handle(Future.succeededFuture(
                                                         new SendDocument()
-                                                                .setNewDocument(book)
+                                                                .setDocument(book)
                                                                 .setCaption(fileName)
                                                 ));
                                             })

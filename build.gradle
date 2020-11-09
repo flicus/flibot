@@ -1,77 +1,31 @@
-/*
- *  The MIT License (MIT)
- *
- *  Copyright (c) 2016 schors
- *   Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to deal
- *  in the Software without restriction, including without limitation the rights
- *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *  copies of the Software, and to permit persons to whom the Software is
- *  furnished to do so, subject to the following conditions:
- *
- *   The above copyright notice and this permission notice shall be included in all
- *  copies or substantial portions of the Software.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *  SOFTWARE.
- */
-
-if (!JavaVersion.current().java8Compatible) {
-    throw new IllegalStateException('''A Haiku:
-                                      |  This needs Java 8,
-                                      |  You are using something else,
-                                      |  Refresh. Try again.'''.stripMargin())
+plugins {
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+    id 'java'
 }
 
-buildscript {
-    repositories {
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-    dependencies {
-        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
-    }
-}
-apply plugin: 'java'
-apply plugin: 'idea'
-apply plugin: "com.github.johnrengelman.shadow"
+group 'org.example'
+version '1.0-SNAPSHOT'
 
-shadowJar {
-    classifier = 'fat'
-    mergeServiceFiles {
-        include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
+repositories {
+    mavenCentral()
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'org.schors.flibot.Main'
     }
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.0'
-}
 
-task stage() {
-    dependsOn shadowJar
-}
+dependencies {
+    compile "log4j:log4j:1.2.17"
+    compile "io.vertx:vertx-core:3.9.0"
+    compile "org.json:json:20151123"
+//    compile "org.apache.httpcomponents:httpclient:4.5.1"
+//    compile "org.apache.httpcomponents:httpmime:4.5.1"
+    compile 'org.telegram:telegrambots:4.7'
+    compile 'org.jdom:jdom2:2.0.6'
+    compile 'com.google.guava:guava:19.0'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
 
-task install() {
-    dependsOn shadowJar
-}
-
-subprojects {
-    apply plugin: 'java'
-    apply plugin: 'idea'
-    apply plugin: "com.github.johnrengelman.shadow"
-
-    repositories {
-        mavenCentral()
-    }
-
-    version = "0.9.3"
-
-    dependencies {
-        compile "log4j:log4j:1.2.17"
-        compile "io.vertx:vertx-core:3.5.1"
-    }
 }

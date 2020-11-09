@@ -42,7 +42,7 @@ public class Main {
         PropertyConfigurator.configure(log4j);
 
         JsonObject config = new JsonObject();
-        if (System.getenv("flibot") != null) {
+        if (System.getenv("org/schors/flibot") != null) {
             //get from env
             config.put("name", System.getenv("name"))
                     .put("token", System.getenv("token"))
