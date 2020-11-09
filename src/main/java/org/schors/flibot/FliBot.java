@@ -65,8 +65,8 @@ import java.util.zip.ZipInputStream;
 
 public class FliBot extends AbstractVerticle {
 
-    //http://flibustahezeous3.onion/opds//search?searchType=authors&searchTerm=Толстой
-    //http://flibustahezeous3.onion/search?searchType=books&searchTerm=криптономикон
+    //http://flibustahezeous3.onion/opds//search?searchType=authors&searchTerm=
+    //http://flibustahezeous3.onion/search?searchType=books&searchTerm=
 
     private static final String rootOPDStor = "flibustahezeous3.onion";
     private static final String rootOPDShttp = "http://flibusta.is";
