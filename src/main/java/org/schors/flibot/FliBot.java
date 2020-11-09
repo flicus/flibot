@@ -48,13 +48,11 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import sun.security.action.GetPropertyAction;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.security.AccessController;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -72,8 +70,7 @@ public class FliBot extends AbstractVerticle {
     private static final String rootOPDShttp = "http://flibusta.is";
     private static final String authorSearch = "/search?searchType=authors&searchTerm=%s";
     private static final String bookSearch = "/search?searchType=books&searchTerm=%s";
-    private static final File tmpdir = new File(AccessController
-            .doPrivileged(new GetPropertyAction("java.io.tmpdir")));
+    private static final File tmpdir = new File(System.getenv("java.io.tmpdir"));
 
     private static final Logger log = Logger.getLogger(FliBot.class);
 
