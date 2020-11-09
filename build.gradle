@@ -6,6 +6,10 @@ plugins {
 group 'org.example'
 version '1.0-SNAPSHOT'
 
+task wrapper(type: Wrapper) {
+    gradleVersion = '5.0'
+}
+
 repositories {
     mavenCentral()
 }
